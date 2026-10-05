@@ -4,7 +4,7 @@
 GMTVRP
 ==========
 
-Generalized multi-task environments built on the Routefinder implementation (see GitHub page and the related paper for more information). 
+Generalized multi-task environments built on the `RouteFinder <https://github.com/ai4co/routefinder>`_ implementation (see [Ber24]_ for more information). 
 In these environments, the initial load of each vehicle is a customizable parameter that must be defined at the start of the trip. 
 This enables the simulation of online settings and creates more challenging scenarios.
 
@@ -81,10 +81,3 @@ Here's everything about GMTVRP environment:
     environment/environment
     generation/generation
     observations/observations
-
-
-**References**
-
-https://github.com/ai4co/routefinder
-
-https://arxiv.org/abs/2406.15007

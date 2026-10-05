@@ -18,8 +18,3 @@ Here's everything about SDVRPTW environment:
     environment/environment
     generation/generation
     observations/observations
-
-References
-------------------
-
-.. [Bia19] BIANCHESSI, Nicola ; DREXL, Michael ; IRNICH, Stefan: The Split Delivery Vehicle Routing Problem with Time Windows and Customer Inconvenience Constraints. In: Transportation Science 53 (2019), Nr. 4, S. 1067–1084

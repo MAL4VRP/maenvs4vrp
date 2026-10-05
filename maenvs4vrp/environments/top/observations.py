@@ -1,3 +1,4 @@
+"""Observation builder for the TOP environment."""
 import torch
 from tensordict import TensorDict
 
@@ -31,13 +32,20 @@ class Observations(ObservationBuilder):
                                 'frac_current_profit', 'dist2agent_div_end_time', 'frac_feasible_nodes', 'frac_time_left',
                                 'time_delta2agent_div_max_dur', 'was_last']
 
-    POSSIBLE_ALL_AGENTS_FEATURES = ['x_coordinate', 'y_coordinate','x_coordinate_min_max', 'y_coordinate_min_max',  'frac_current_time', 'frac_current_profit',
-                                    'remaining_capacity', 'was_last']
+    POSSIBLE_ALL_AGENTS_FEATURES = ['x_coordinate', 'y_coordinate', 'x_coordinate_min_max',
+                                    'y_coordinate_min_max', 'frac_current_time', 'frac_current_profit',
+                                    'was_last']
 
     POSSIBLE_GLOBAL_FEATURES = ['frac_profits', 'frac_colect_profits', 'frac_done_agents']
 
 
     def __init__(self, feature_list:Dict = None):
+        """
+        Initialize the observation builder.
+
+        Args:
+            feature_list (Dict, optional): Dictionary containing observation features list to be available to the agent. Defaults to None.
+        """
         super().__init__()
         """
         Args:
@@ -53,7 +61,7 @@ class Observations(ObservationBuilder):
                                     'agent': ['frac_current_profit'],
                                     'other_agents': [],
                                     'all_agents': [],
-                                    'global': [ 'frac_fleet_load_capacity', 'frac_done_agents']}
+                                    'global': ['frac_done_agents']}
 
         if feature_list is None:
             feature_list = self.default_feature_list
@@ -72,10 +80,7 @@ class Observations(ObservationBuilder):
         Set environment.
 
         Args:
-            env(AECEnv): Environment.
-
-        Returns:
-            None.
+            env (AECEnv): Environment.
         """
 
         super().set_env(env)
@@ -83,70 +88,70 @@ class Observations(ObservationBuilder):
 
     ## static features
     def get_feat_x_coordinate(self):
-        """ static feature
-        Args:
+        """
+        static feature
 
         Returns:
-            npt.NDArray: x coordinates of instance nodes.
+            torch.Tensor: Instance nodes X coordinates.
         """
         return self.env.td_state["coords"][:, :, 0]
 
     def get_feat_y_coordinate(self):
-        """ static feature
-        Args:
+        """
+        static feature
 
         Returns:
-            npt.NDArray: y coordinates of instance nodes.
+            torch.Tensor: Instance nodes Y coordinates.
         """
         return self.env.td_state["coords"][:, :, 1]
 
     def get_feat_x_coordinate_min_max(self):
-        """ static feature
-        Args:
+        """
+        static feature
 
         Returns:
-            npt.NDArray: min-max normalized x coordinates of instance nodes.
+            torch.Tensor: Min. and max. x coordinates of instance nodes.
         """
         ncoord = self._min_max_normalization2d(self.env.td_state["coords"])
         feat = ncoord[:,:, 0]
         return feat
 
     def get_feat_y_coordinate_min_max(self):
-        """ static feature
-        Args:
+        """
+        static feature
 
         Returns:
-            npt.NDArray: min-max normalized y coordinates of instance nodes.
+            torch.Tensor: Min-max normalized Y coordinates of instance nodes.
         """
         ncoord = self._min_max_normalization2d(self.env.td_state["coords"])
         feat = ncoord[:, :, 1]
         return feat
 
     def get_feat_profits(self):
-        """ static feature
-        Args:
+        """
+        static feature
 
         Returns:
-            npt.NDArray: nodes' profits.
+            torch.Tensor: Nodes profits.
         """
         return self.env.td_state['profits']
 
     def get_feat_service_time(self):
-        """ static feature
-        Args:
+        """
+        static feature
 
         Returns:
-            npt.NDArray: nodes' service time.
+            torch.Tensor: Nodes service time.
         """
         return self.env.td_state['service_time']
 
 
     def get_feat_is_depot(self):
-        """ static feature
-        Args:
+        """
+        static feature
 
         Returns:
-            npt.NDArray: is depot bool
+            torch.Tensor: If the node is depot or not.
         """
         return self.env.td_state['is_depot']
 
@@ -154,11 +159,11 @@ class Observations(ObservationBuilder):
     ## dynamic features
 
     def get_feat_arrive2node_div_end_time(self):
-        """ dynamic feature
-        Args:
+        """
+        dynamic feature
 
         Returns:
-            npt.NDArray: agent arrive time to nodes divided by end time.
+            torch.Tensor: Agent arriving time to nodes divided by end time.
         """
         loc = self.env.td_state['coords'].gather(1, self.env.td_state['cur_agent']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
         ptime = self.env.td_state['cur_agent']['cur_time'].clone()
@@ -168,22 +173,22 @@ class Observations(ObservationBuilder):
 
 
     def get_feat_time2end_after_step_div_end_time(self):
-        """ dynamic feature
-        Args:
+        """
+        dynamic feature
 
         Returns:
-            npt.NDArray: time end, after agent step to node, divided by end time.
+            torch.Tensor: Time end, after agent step to node, divided by end time.
         """
         arrivej = self.get_feat_arrive2node_div_end_time() * self.env.td_state['end_time'].unsqueeze(dim=-1)
         feat = (self.env.td_state['end_time'].unsqueeze(dim=-1) - arrivej)
         return feat / self.env.td_state['end_time'].unsqueeze(dim=-1)
 
     def get_feat_fract_time_after_step_div_end_time(self):
-        """ dynamic feature
-        Args:
+        """
+        dynamic feature
 
         Returns:
-            npt.NDArray: fraction of time left, after agent step to node.
+            torch.Tensor: Fraction of time left, after agent step to node.
         """
         arrivej = self.get_feat_arrive2node_div_end_time() * self.env.td_state['end_time'].unsqueeze(dim=-1)
         feat = (arrivej - self.env.td_state['start_time'].unsqueeze(dim=-1))
@@ -191,11 +196,11 @@ class Observations(ObservationBuilder):
 
 
     def get_feat_reachable_frac_agents(self):
-        """ dynamic feature
-        Args:
+        """
+        dynamic feature
 
         Returns:
-            npt.NDArray: fraction of time left, after agent step to node.
+            torch.Tensor: Feasible nodes per agent.
         """
         feat = self.env.td_state['agents']['action_mask'].sum(dim=1)
 
@@ -203,33 +208,33 @@ class Observations(ObservationBuilder):
 
     ## Agent features
     def get_feat_agent_x_coordinate(self):
-        """ active agent feature
-        Args:
+        """
+        active agent feature
 
         Returns:
-            int: agent current x location.
+            torch.Tensor: Current agent X coordinate.
         """
         loc = self.env.td_state["coords"].gather(1, self.env.td_state['cur_agent']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
         feat = loc[:, :, 0]
         return feat
 
     def get_feat_agent_y_coordinate(self):
-        """ active agent feature
-        Args:
+        """
+        active agent feature
 
-        Returns
-            int: agent current y location.
+        Returns:
+            torch.Tensor: Current agent Y coordinate.
         """
         loc = self.env.td_state["coords"].gather(1, self.env.td_state['cur_agent']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
         feat = loc[:, :, 1]
         return feat
 
     def get_feat_agent_x_coordinate_min_max(self):
-        """ active agent feature
-        Args:
+        """
+        active agent feature
 
         Returns:
-            int: agent current min-max normalized x location.
+            torch.Tensor: Current agent min-max normalized X location.
         """
         ncoord = self._min_max_normalization2d(self.env.td_state["coords"])
         loc = ncoord.gather(1, self.env.td_state['cur_agent']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
@@ -237,11 +242,11 @@ class Observations(ObservationBuilder):
         return feat
 
     def get_feat_agent_y_coordinate_min_max(self):
-        """ active agent feature
-        Args:
+        """
+        active agent feature
 
-        Returns
-            int: agent current min-max normalized y location.
+        Returns:
+            torch.Tensor: Current agent min-max normalized Y location.
         """
         ncoord = self._min_max_normalization2d(self.env.td_state["coords"])
         loc = ncoord.gather(1, self.env.td_state['cur_agent']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
@@ -249,31 +254,31 @@ class Observations(ObservationBuilder):
         return feat
 
     def get_feat_agent_frac_current_time(self):
-        """ active agent feature
-        Args:
+        """
+        active agent feature
 
         Returns:
-            int: agent fraction of time elapsed.
+            torch.Tensor: Agent fraction of time elapsed.
         """
         feat =  (self.env.td_state['cur_agent']['cur_time'] - self.env.td_state['start_time'].unsqueeze(1))
         return feat / self.env.td_state['max_tour_duration'].unsqueeze(1)
 
     def get_feat_agent_frac_current_profit(self):
-        """ active agent feature
-        Args:
+        """
+        active agent feature
 
         Returns:
-            int: agent fraction of cum profit.
+            torch.Tensor: Fraction of profits.
         """
         feat =  self.env.td_state['cur_agent']['cum_profit'] / self.env.td_state['profits'].sum(dim=-1).unsqueeze(1)
         return feat
 
     def get_feat_agent_arrivedepot_div_end_time(self):
-        """ active agent feature
-        Args:
+        """
+        active agent feature
 
         Returns:
-            int: agent time to depot divided by end time.
+            torch.Tensor: Agent time to depot divided by end time.
         """
         loc = self.env.td_state['coords'].gather(1, self.env.td_state['cur_agent']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
         ptime = self.env.td_state['cur_agent']['cur_time'].clone()
@@ -285,11 +290,11 @@ class Observations(ObservationBuilder):
         return feat / self.env.td_state['end_time'].unsqueeze(1)
 
     def get_feat_agent_frac_feasible_nodes(self):
-        """ active agent feature
-        Args:
+        """
+        active agent feature
 
         Returns:
-            int: fraction of feasible nodes, in order to the total number of instance nodes.
+            torch.Tensor: Fraction of current agent feasible nodes, in order to the total number of instance nodes.
         """
         feat = self.env.td_state['cur_agent']['action_mask'].sum(dim=1).unsqueeze(1)
         return feat / self.env.num_nodes
@@ -298,22 +303,22 @@ class Observations(ObservationBuilder):
 
     ## Other other_agents features
     def get_feat_other_agents_x_coordinate(self):
-        """ active agent feature
-        Args:
+        """
+        active agent feature
 
         Returns:
-            int: agent current min-max normalized x location.
+            torch.Tensor: Agents X coordinates.
         """
         loc = self.env.td_state["coords"].gather(1, self.env.td_state['agents']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
         feat = loc[:, :, 0]
         return feat
 
     def get_feat_other_agents_y_coordinate(self):
-        """ active agent feature
-        Args:
+        """
+        active agent feature
 
         Returns:
-            int: agent current min-max normalized y location.
+            torch.Tensor: Agents Y coordinates.
         """
         loc = self.env.td_state["coords"].gather(1, self.env.td_state['agents']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
         feat = loc[:, :, 1]
@@ -322,28 +327,28 @@ class Observations(ObservationBuilder):
 
 
     def get_feat_other_agents_frac_current_time(self):
-        """ agents features
-        Args:
+        """
+        agents features
 
         Returns:
-            npt.NDArray: agents fraction of elapsed time.
+            torch.Tensor: Agents fraction of elapsed time.
         """
         feats = self.env.td_state['agents']['cur_time'] / self.env.td_state['end_time'].unsqueeze(dim=-1)
         return feats
 
     def get_feat_other_agents_time_delta2agent_div_max_dur(self):
-        """ agents features
-        Args:
+        """
+        agents features
 
         Returns:
-            npt.NDArray: agents fraction of elapsed time.
+            torch.Tensor: Difference between agents time and current agent time, divided by max. tour duration.
         """
         feats = (self.env.td_state['agents']['cur_time'] - self.env.td_state['cur_agent']['cur_time'] )/ self.env.td_state['max_tour_duration'].unsqueeze(dim=-1)
         return feats
 
     def get_feat_other_agents_frac_time_left(self):
-        """ agents features
-        Args:
+        """
+        agents features
 
         Returns:
             npt.NDArray: agents fraction of elapsed time.
@@ -352,22 +357,22 @@ class Observations(ObservationBuilder):
         return feats
 
     def get_feat_other_agents_frac_current_profit(self):
-        """ agents features
-        Args:
+        """
+        agents features
 
         Returns:
-            npt.NDArray: agents fraction of cum profit
+            npt.NDArray: agents fraction of cum profit.
         """
         feats = self.env.td_state['agents']['cum_profit'] / self.env.td_state['profits'].sum(dim=-1).unsqueeze(1)
         return feats
 
 
     def get_feat_other_agents_was_last(self):
-        """ agents features
-        Args:
+        """
+        agents features
 
         Returns:
-            npt.NDArray: agents fraction of cum profit
+            torch.Tensor: Last agent performing an action.
         """
         feats = torch.zeros_like(self.env.td_state['agents']['active_agents_mask'], dtype=torch.long).scatter_(1, self.env.td_state['cur_agent_idx'], torch.ones_like(self.env.td_state['cur_agent_idx']))
         return feats
@@ -376,9 +381,6 @@ class Observations(ObservationBuilder):
     def get_feat_all_agents_x_coordinate(self):
         """
         Agents X coordinates.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Agents X coordinates.
@@ -391,9 +393,6 @@ class Observations(ObservationBuilder):
         """
         Agents Y coordinates.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Agents Y coordinates.
         """
@@ -402,8 +401,8 @@ class Observations(ObservationBuilder):
         return feat
 
     def get_feat_all_agents_frac_current_time(self):
-        """ agents features
-        Args:
+        """
+        agents features
 
         Returns:
             npt.NDArray: agents fraction of elapsed time.
@@ -412,46 +411,119 @@ class Observations(ObservationBuilder):
         return feats
 
     def get_feat_all_agents_frac_current_profit(self):
-        """ agents features
-        Args:
+        """
+        agents features
 
         Returns:
-            npt.NDArray: agents fraction of cum profit
+            npt.NDArray: agents fraction of cum profit.
         """
         feats = self.env.td_state['agents']['cum_profit'] / self.env.td_state['profits'].sum(dim=-1).unsqueeze(1)
         return feats
     ## Global features
     def get_feat_global_frac_done_agents(self):
-        """global features
-
-        Args:
+        """
+        global features
 
         Returns:
-            int: fraction of done agents.
+            torch.Tensor: Fraction of done agents.
         """
         feat = self.env.td_state['agents']['active_agents_mask'].sum(dim=1).unsqueeze(1)
         return 1 - (feat / self.env.num_agents)
 
     def get_feat_global_frac_profits(self):
-        """global features
-
-        Args:
+        """
+        global features
 
         Returns:
-            int: fraction of remaining profits
+            torch.Tensor: Fraction of profits.
         """
         feat = self.env.td_state['nodes']['cur_profits'].sum(dim=-1).unsqueeze(1)
         return feat / self.env.td_state['profits'].sum(dim=-1).unsqueeze(1)
 
     def get_feat_global_frac_colect_profits(self):
-        """global features
-
-        Args:
+        """
+        global features
 
         Returns:
-            int: fraction of fleet colect profits
+            torch.Tensor: Fraction of agents profits collection.
         """
         feat = self.env.td_state['agents']['cum_profit'].sum(dim=-1).unsqueeze(1)
         return feat /  self.env.td_state['profits'].sum(dim=-1).unsqueeze(1)
+
+    ## Features added for consistency with the POSSIBLE_* lists
+
+    def get_feat_other_agents_x_coordinate_min_max(self):
+        """
+        Agents min-max normalized X location.
+
+        Returns:
+            torch.Tensor: Agents min-max normalized X location.
+        """
+        ncoord = self._min_max_normalization2d(self.env.td_state["coords"])
+        loc = ncoord.gather(1, self.env.td_state['agents']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
+        feat = loc[:, :, 0]
+        return feat
+
+    def get_feat_other_agents_y_coordinate_min_max(self):
+        """
+        Agents min-max normalized Y location.
+
+        Returns:
+            torch.Tensor: Agents min-max normalized Y location.
+        """
+        ncoord = self._min_max_normalization2d(self.env.td_state["coords"])
+        loc = ncoord.gather(1, self.env.td_state['agents']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
+        feat = loc[:, :, 1]
+        return feat
+
+    def get_feat_other_agents_dist2agent_div_end_time(self):
+        """
+        Agents distance to active agent divided by end time.
+
+        Returns:
+            torch.Tensor: Agents distance to active agent divided by end time.
+        """
+        locs = self.env.td_state["coords"].gather(1, self.env.td_state['agents']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
+        loc = self.env.td_state['coords'].gather(1, self.env.td_state['cur_agent']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
+
+        feat = torch.pairwise_distance(loc, locs, eps=0, keepdim = False)
+        return feat  / self.env.td_state['end_time'].unsqueeze(dim=-1)
+
+    def get_feat_other_agents_frac_feasible_nodes(self):
+        """
+        Fraction of agents feasible nodes, in order to the total number of instance nodes.
+
+        Returns:
+            torch.Tensor: Fraction of agents feasible nodes, in order to the total number of instance nodes.
+        """
+        feat = self.env.td_state['agents']['action_mask'].sum(dim=-1)
+        return feat / self.env.num_nodes
+
+    def get_feat_all_agents_x_coordinate_min_max(self):
+        """
+        Agents min-max normalized X location.
+
+        Returns:
+            torch.Tensor: Agents min-max normalized X location.
+        """
+        return self.get_feat_other_agents_x_coordinate_min_max()
+
+    def get_feat_all_agents_y_coordinate_min_max(self):
+        """
+        Agents min-max normalized Y location.
+
+        Returns:
+            torch.Tensor: Agents min-max normalized Y location.
+        """
+        return self.get_feat_other_agents_y_coordinate_min_max()
+
+    def get_feat_all_agents_was_last(self):
+        """
+        agents features
+
+        Returns:
+            torch.Tensor: Last agent performing an action.
+        """
+        return self.get_feat_other_agents_was_last()
 
     # --------------------------------------------------------------------------------------

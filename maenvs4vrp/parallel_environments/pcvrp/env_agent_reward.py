@@ -1,3 +1,4 @@
+"""Reward functions for the PCVRP parallel environment."""
 import torch
 from tensordict import TensorDict
 from maenvs4vrp.core.env_agent_reward import RewardFn
@@ -13,13 +14,7 @@ class DenseReward(RewardFn):
 
     def __init__(self):
         """
-        Constructor.
-
-        Args:
-            n/a.
-
-        Returns:
-            None.
+        Initialize the reward function.
         """
         self.env = None
         self.pending_penalty = -10
@@ -30,10 +25,7 @@ class DenseReward(RewardFn):
         Set environment.
 
         Args:
-            env(AECEnv): Environment.
-
-        Returns:
-            None.
+            env (AECEnv): Environment.
         """
 
         self.env = env
@@ -43,11 +35,10 @@ class DenseReward(RewardFn):
         Get reward and penalty.
 
         Args:
-            action(torch.Tensor): [B, A] tensor with all agents' moves.
+            actions (torch.Tensor): [B, A] tensor with all agents' moves.
 
         Returns:
-            reward(torch.Tensor): Per-agent reward of shape [B, A].
-            penalty(torch.Tensor): Per-agent penalty of shape [B, A].
+            tuple[torch.Tensor, torch.Tensor]: Reward and penalty, with shape [B, 1] each.
         """
 
         # Each agent's reward = negative travel time it spent on this step
@@ -86,13 +77,7 @@ class SparseReward(RewardFn):
 
     def __init__(self):
         """
-        Constructor.
-
-        Args:
-            n/a.
-
-        Returns:
-            None.
+        Initialize the reward function.
         """
         self.env = None
         self.pending_penalty = -10
@@ -103,10 +88,7 @@ class SparseReward(RewardFn):
         Set environment.
 
         Args:
-            env(Environment): Environment.
-
-        Returns:
-            None.
+            env (Environment): Environment.
         """
 
         self.env = env
@@ -116,11 +98,10 @@ class SparseReward(RewardFn):
         Get reward and penalty.
 
         Args:
-            actions(torch.Tensor): [B, A] tensor with all agents' moves.
+            actions (torch.Tensor): [B, A] tensor with all agents' moves.
 
         Returns:
-            reward(torch.Tensor): Reward.
-            penalty(torch.Tensor): Penalty.
+            tuple[torch.Tensor, torch.Tensor]: Reward and penalty, with shape [B, 1] each.
         """
 
         # Each agent's reward and penalty: [B, A]

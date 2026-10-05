@@ -1,3 +1,4 @@
+"""Random instance generator for the CVRP environment."""
 from numpy.random import random
 import torch
 from tensordict import TensorDict
@@ -30,11 +31,8 @@ class InstanceGenerator(InstanceBuilder):
         """
         Get list of generated files.
 
-        Args:
-            n/a.
-
         Returns:
-            None.
+            dict: Mapping from instance set name to the list of available instance files.
         """
         base_dir = path.dirname(path.dirname(path.abspath(__file__)))
 
@@ -72,18 +70,15 @@ class InstanceGenerator(InstanceBuilder):
         Constructor. Instance generator.
 
         Args:
-            num_agents(Optional[int]): Total number of agents. Defaults to 20.
-            num_nodes(Optional[int]): Total number of nodes. Defaults to 21.
-            capacity(Optional[float]): Total capacity for each agent. Defaults to 1.0.
-            speed(Optional[float]): Vehicles' speed. Defaults to 1.0.
-            instance_type(Optional[str]): Instance type. Can be "train", "validation", or "test". Defaults to "train".
-            list_of_instances(Optional[set]): List of instances file names. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
-            batch_size(torch.Size, optional): Batch size. If not specified, defaults to 1.
-            seed(int): Random number generator seed. Defaults to None.
-
-        Returns:
-            None.
+            num_agents (int, optional): Total number of agents. Defaults to 20.
+            num_nodes (int, optional): Total number of nodes. Defaults to 21.
+            capacity (float, optional): Capacity of each agent. Defaults to 1.0.
+            speed (float, optional): Vehicles' speed. Defaults to 1.0.
+            instance_name (str, optional): Instance name. Can be "validation" or "test". Defaults to None.
+            list_of_instances (set, optional): List of instances file names. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
         """
 
         # seed the generation process
@@ -108,13 +103,10 @@ class InstanceGenerator(InstanceBuilder):
         self.list_of_instances = list_of_instances
         self.instance_name = instance_name
 
-        if self.instance_name is not None:
-            dataset_available = self._ensure_dataset_exists()
-            if not dataset_available:
-                self.instance_name = None
-                self.list_of_instances = None
-            elif list_of_instances is not None:
-                self.load_list_of_instances()
+        # Saved instances are only read when a list of instances is given, so random
+        # generation never needs the dataset (nor network access).
+        if list_of_instances is not None:
+            self.load_list_of_instances()
 
     def _ensure_dataset_exists(self) -> bool:
         """
@@ -216,20 +208,14 @@ class InstanceGenerator(InstanceBuilder):
         Read instance data from file.
 
         Args:
-            instance_name(str): instance file name.
+            instance_name (str): instance file name.
 
         Returns:
             Dict: Instance data.
         """
 
         base_dir = path.dirname(path.dirname(path.abspath(__file__)))
-        new_instaces_path = 'cvrp/data/generated/val_servs_50_agents_10'
-        generated_file = f"{base_dir}/{new_instaces_path}/{instance_name}.pkl"
-
-        # generated_file = '{path_to_generated_instances}/{instance}.pkl' \
-        #                 .format(path_to_generated_instances=base_dir,
-        #                         instance=instance_name)
-        print(generated_file)
+        generated_file = f"{base_dir}/{instance_name}.pkl"
         with open(generated_file, 'rb') as fp:
             instance = pickle.load(fp)
         self.batch_size = instance['data'].batch_size
@@ -243,12 +229,11 @@ class InstanceGenerator(InstanceBuilder):
         Get an instance with custom number of agents.
 
         Args:
-            instance_name(str): Instance file name.
-            num_agents(int): Number of agents. Defaults to None.
+            instance_name (str): Instance file name.
+            num_agents (int, optional): Total number of agents. Defaults to None.
 
         Returns:
             Dict: Instance data.
-
         """
 
         instance = self.instances_data.get(instance_name)
@@ -264,13 +249,17 @@ class InstanceGenerator(InstanceBuilder):
         Load every instance on list_of_instances list.
 
         Args:
-            list_of_instances(list): List of instances file names. Defaults to None.
+            list_of_instances (list, optional): List of instances file names. Defaults to None.
 
-        Returns:
-            None.
+        Raises:
+            RuntimeError: If the dataset is not available locally nor on Hugging Face.
         """
         if list_of_instances is not None:
             self.list_of_instances = list_of_instances
+        if self.instance_name is not None and not self._ensure_dataset_exists():
+            raise RuntimeError(f"Dataset '{self.instance_name}' is not available locally nor on Hugging Face '{HF_REPO_ID}'.")
+        if list_of_instances is None and self.list_of_instances is None:
+            self.list_of_instances = self.get_list_of_instances().get(self.instance_name, [])
         self.instances_data = dict()
         for instance_name in self.list_of_instances:
             instance = self.read_instance_data(instance_name)
@@ -286,8 +275,9 @@ class InstanceGenerator(InstanceBuilder):
         Generate random instance.
 
         Args:
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            seed(int, optional): Random number generator seed. Defaults to None.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
             TensorDict: Instance data.
@@ -345,13 +335,14 @@ class InstanceGenerator(InstanceBuilder):
                                  seed:Optional[int]=None,
                                  device:Optional[str]="cpu")-> TensorDict:
         """
-        Generate augmentated instance.
+        Generate augmented instance.
 
         Args:
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to 2.
-            transform(bool, optional): Whether to transform the instance. Defaults to False.
-            seed(int, optional): Random number generator seed. Defaults to None.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to 2.
+            transform (bool, optional): Whether to apply coordinate transformation. Defaults to False.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
             TensorDict: Instance data.
@@ -404,7 +395,7 @@ class InstanceGenerator(InstanceBuilder):
         Sample one instance from instance list.
 
         Args:
-            seed(int, optional): Random number generator seed. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
 
         Returns:
             str: Instance name.
@@ -432,19 +423,23 @@ class InstanceGenerator(InstanceBuilder):
         Sample one instance from instance space.
 
         Args:
-            num_agents(int, optional): Total number of agents. Defaults to None.
-            num_nodes(int, optional):  Total number of nodes. Defaults to None.
-            capacity(float, optional): Total capacity for each agent. Defaults to None.
-            speed(float, optional): Vehicles' speed. Defaults to None.
-            instance_name(str, optional):  Instance name. Defaults to None.
-            sample_type(str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to None.
-            seed(int, optional): Random number generator seed. Defaults to None.
-            transform(bool, optional): Whether to apply coordinate transformation. Defaults to False.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            capacity (float, optional): Capacity of each agent. Defaults to None.
+            speed (float, optional): Vehicles' speed. Defaults to None.
+            instance_name (str, optional): Instance name. Defaults to None.
+            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            transform (bool, optional): Whether to apply coordinate transformation. Defaults to False.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
             Dict: Instance data.
+
+        Raises:
+            ValueError: If ``sample_type`` is not "random", "augment" or "saved".
         """
         if seed is not None:
             self._set_seed(seed)
@@ -486,6 +481,9 @@ class InstanceGenerator(InstanceBuilder):
                                                      device=device)
         elif sample_type=='saved':
             instance_info = self.get_instance(instance_name, num_agents=num_agents)
+
+        else:
+            raise ValueError(f"Unknown sample_type '{sample_type}'. Expected 'random', 'augment' or 'saved'.")
 
         return instance_info
 

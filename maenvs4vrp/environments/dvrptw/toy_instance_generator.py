@@ -1,3 +1,4 @@
+"""Toy instance generator for the DVRPTW environment."""
 import torch
 from tensordict import TensorDict
 
@@ -25,11 +26,11 @@ class ToyInstanceGenerator(InstanceBuilder):
         Constructor. Toy instance generator for testing.
 
         Args:
-            instance_type(str):  instance type. Can be "validation" or "test". Defaults to "validation".
-            set_of_instances(set): Set of instances file names. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
-            batch_size(torch.Size, optional): Batch size. If not specified, defaults to 1. Defaults to None.
-            seed(int): Random number generator seed. Defaults to None.
+            instance_type (str, optional): instance type. Can be "validation" or "test". Defaults to "validation".
+            set_of_instances (set, optional): Set of instances file names. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
         """
 
         # seed the generation process
@@ -66,12 +67,12 @@ class ToyInstanceGenerator(InstanceBuilder):
         Generate random toy instance.
 
         Args:
-            num_agents(int): Total number of agents. Defaults to 4.
-            num_nodes(int): Total number of nodes. Defaults to 13.
-            capacity(int): Total capacity for each agent. Defaults to 10.
-            service_times(int): Service times in the nodes. Defaults to 0.2.
-            batch_size(int): Batch size. Defaults to 1.
-            seed(int, optional): Random number generator seed. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to 4.
+            num_nodes (int, optional): Total number of nodes. Defaults to 13.
+            capacity (int, optional): Capacity of each agent. Defaults to 10.
+            service_times (int, optional): Service time in the nodes. Defaults to 0.2.
+            batch_size (int, optional): Batch size. Defaults to 1.
+            seed (int, optional): Random number generator seed. Defaults to None.
 
         Returns:
             TensorDict: Instance data.
@@ -166,23 +167,27 @@ class ToyInstanceGenerator(InstanceBuilder):
                         sample_type:str='random',
                         batch_size: Optional[torch.Size] = None,
                         n_augment: Optional[int] = None,
-                        seed:int=None)-> Dict:
+                        seed:int=None, **kwargs)-> Dict:
         """
         Sample one instance from instance space.
 
         Args:
-            num_agents(int): Total number of agents. Defaults to None.
-            num_nodes(int): Total number of nodes. Defaults to None.
-            service_times(float): Service times in the nodes. Defaults to 0.2.
-            capacity(int): Capacity of the agents. Defaults to 10.
-            instance_name(str): Instance name. Defaults to None.
-            sample_type(str): Sample type. It can be "random" or something else for "first n". Defaults to "random".
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to None.
-            seed(int): Random number generator seed. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            service_times (float, optional): Service time in the nodes. Defaults to 0.2.
+            capacity (int, optional): Capacity of each agent. Defaults to 20.
+            instance_name (str, optional): Instance name. Defaults to None.
+            sample_type (str, optional): Sample type. It can only be "random". Defaults to "random".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            **kwargs: Extra keyword arguments accepted for API compatibility; ignored.
 
         Returns:
             Dict: Instance data.
+
+        Raises:
+            ValueError: If ``sample_type`` is not "random".
         """
         if seed is not None:
             self._set_seed(seed)
@@ -220,7 +225,29 @@ class ToyInstanceGenerator(InstanceBuilder):
                                                      service_times=service_times,
                                                      batch_size = batch_size,
                                                      seed=seed)
+        else:
+            raise ValueError(f"Unknown sample_type '{sample_type}'. Expected 'random'.")
 
+        return self._complete_instance(instance_info)
+
+    def _complete_instance(self, instance_info: Dict) -> Dict:
+        """
+        Add the fields the environment expects that the hand-written toy instance does not define.
+
+        Args:
+            instance_info (Dict): Toy instance.
+
+        Returns:
+            Dict: Instance with floating point coordinates and times and a unit speed.
+        """
+        data = instance_info['data']
+        for key in ('coords', 'tw_low', 'tw_high', 'start_time', 'end_time', 'time_windows'):
+            if key in data.keys() and not torch.is_floating_point(data[key]):
+                data[key] = data[key].float()
+        if 'speed' not in data.keys():
+            data['speed'] = torch.ones((*data.batch_size, 1), dtype=torch.float32, device=data.device)
+        # toy instances have a fixed size
+        instance_info['num_nodes'] = data['coords'].shape[1]
         return instance_info
 
 if __name__ == '__main__':

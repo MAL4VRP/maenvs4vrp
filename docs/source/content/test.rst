@@ -2,111 +2,63 @@
 Unit Testing
 =====================
 
-The library includes several tests to verify that it is running correctly.  
-Before simulating problems, it is recommended to run the available unit tests, located in the directory:
-
-``tests/unit/environments``
-
-We provide the following types of tests:
-
-Check Multi-Task Solution Test
-==============================
-
-This script runs tests for **Multi-Tasking environments**, validating solution correctness under multiple conditions:
-
-* **Random instances:** Tests across batches with different variants generated through random attribute sampling.
-* **All variants:** Creates and validates instances for every available environment variant.
-* **Different agent selectors:** Tests all agent selectors — ``AgentSelector``, ``RandomSelector``, and ``SmallestTimeAgentSelector``.
-* **Different configurations:** Evaluates combinations of various numbers of agents and nodes.
-
-Configuration values can be customized using the following command-line parameters:
-
-* ``--device`` can be ``CPU`` or ``GPU``.
-* ``--batch`` can be any integer.
-* ``--num_agents`` can be a single or multiple integer values. To define n values, use the parameter n times.
-* ``--num_nodes`` can be a signle or multiple integer values. To define n values, use the parameter n times.
-
-To execute the test, run:
+The library includes a test suite that checks every environment, generator and observation feature,
+and that the code, the docstrings and this documentation stay consistent. Run it from the repository root:
 
 .. code-block:: bash
 
-    pytest --device cpu --batch 1 --num_agents 2 --num_nodes 11 --num_nodes 13 check_solution_mt_test.py
+    pip install -e ".[dev]"
+    pytest
 
-
-Check Solution Test
-===================
-
-This script performs solution validation for **non–Multi-Tasking environments**:
-
-* **Random instances:** Tests random variants generated across batches.
-* **Different agent selectors:** Includes ``AgentSelector``, ``RandomSelector``, and ``SmallestTimeAgentSelector``.
-* **Different configurations:** Runs across multiple agent and node configurations.
-
-Configuration values can be customized using the following command-line parameters:
-
-* ``--device`` can be ``CPU`` or ``GPU``.
-* ``--batch`` can be any integer.
-* ``--num_agents`` can be a single or multiple integer values. To define n values, use the parameter n times.
-* ``--num_nodes`` can be a signle or multiple integer values. To define n values, use the parameter n times.
-
-To execute the test, run:
+The default run takes a couple of minutes on a CPU. Two groups of tests are excluded by default:
 
 .. code-block:: bash
 
-    pytest --device cpu --batch 1 --num_agents 2 --num_nodes 11 --num_nodes 13 check_solution_test.py
+    pytest -m slow        # large instances and every multi-task variant with every selector
+    pytest -m notebooks   # execute the tutorial notebooks (needs the [notebooks] extra)
 
+Random instances never need network access; benchmark tests only use the benchmark instance sets that are
+already available locally and are skipped otherwise.
 
-Reset Test
-==========
-
-The **Reset Test** ensures that environments reset and behave correctly under different configurations.  
-It includes three types of checks:
-
-* **Reset tests:** Verify that both benchmarking and standard instances reset without errors.
-* **Observation tests:** Confirm that environment observations are correctly produced.
-* **Agent iteration tests:** Validate that agent selection and iteration work as expected for all selectors and generator types.
-
-To execute the test, run:
-
-.. code-block:: bash
-
-    pytest reset_test.py
-
-
-Reset Benchmarking Test
+Solution validity tests
 =======================
 
-Validates the correct behavior of **benchmarking resets**.
+``tests/unit/environments/check_solution_test.py`` (single-task environments),
+``check_solution_mt_test.py`` (multi-task environments, including every variant preset) and
+``check_solution_parallel_env_test.py`` (parallel environments) run random episodes with every agent
+selection mode and check the final solution with ``check_solution_validity``.
 
-To execute the test, run:
+The problem sizes can be set from the command line:
 
-.. code-block:: bash
-
-    pytest reset_bench_test.py
-
-
-Seed Test
-=========
-
-The **Seed Test** verifies reproducibility and consistency across environments:
-
-* **Seed consistency:** Checks whether identical seeds yield identical outputs, and different seeds yield different ones.
-* **Instance generator:** Validates equivalence between benchmarking and standard instance generators.
-
-To execute the test, run:
+* ``--device`` can be ``cpu`` or ``cuda``.
+* ``--batch`` sets the batch size (default 2).
+* ``--num_agents`` / ``--agents`` sets the number of agents. Repeat the option to test several values.
+* ``--num_nodes`` / ``--nodes`` sets the number of nodes. Repeat the option to test several values.
 
 .. code-block:: bash
 
-    pytest seed_test.py
+    pytest tests/unit/environments/check_solution_test.py --batch 4 --num_agents 20 --num_nodes 51 --num_nodes 101
 
+Environment tests
+=================
 
-Seed Benchmarking Test
-======================
+* ``reset_test.py``: every reset method and every agent selection mode (agent selectors, sequential
+  agent-node, simultaneous and sequential node-agent selection) of every AEC environment.
+* ``reset_bench_test.py`` and ``seed_bench_test.py``: episodes and seeding on benchmark instances.
+* ``seed_test.py``: identical seeds give identical instances and different seeds give different ones.
+* ``tests/unit/test_episodes.py``: identical seeds give identical episodes, the dense and sparse rewards agree
+  over an episode, and the solution validators reject corrupted solutions.
+* ``tests/unit/test_generators.py``: unknown ``sample_type`` values raise ``ValueError``, random generation
+  works without network access, and every toy instance can be solved.
+* ``tests/unit/test_observations.py``: every feature listed in the ``POSSIBLE_*_FEATURES`` lists works and has
+  the expected shape, alone and combined, and the default features are declared.
 
-Validates seed reproducibility for **benchmarking environments**.
+Consistency tests
+=================
 
-To execute the test, run:
-
-.. code-block:: bash
-
-    pytest seed_bench_test.py
+* ``tests/unit/test_structure.py``: every environment package has the same files, classes, base classes and
+  public API (see ``AGENTS.md``), and its documentation pages.
+* ``tests/unit/test_docstrings.py``: docstrings follow the Google-style convention and document exactly the
+  parameters of each signature.
+* ``tests/unit/test_docs.py``: every ``autodoc`` target exists, the observation pages are up to date
+  (regenerate them with ``python docs/tools/generate_observations_docs.py``) and every citation is defined.

@@ -4,7 +4,7 @@
 Benchmark Instance Generation 
 ===============================
 
-MDVRPTW environment instances are introduced in [Vid2013]_:
+MDVRPTW environment instances are introduced in [Vid13]_:
 
 Benchmark instance generation settings are defined in file ``benchmark_instances_generator.py``.
 
@@ -85,7 +85,3 @@ BenchmarkInstanceGenerator
 .. autoclass:: maenvs4vrp.environments.mdvrptw.benchmark_instances_generator.BenchmarkInstanceGenerator
     :members:
     :special-members: __init__
-
-**References**
-
-.. [Vid2013] M, T. Vidal, T. G. Crainic, M. Gendreau, and C. Prins, A hybrid genetic algorithm with adaptive diversity management for a large class of vehicle routing problems with time-windows, Comput. Oper. Res., vol. 40, no. 1, pp. 475-489, 2013.

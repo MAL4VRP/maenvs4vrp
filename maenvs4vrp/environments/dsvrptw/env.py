@@ -1,3 +1,4 @@
+"""DSVRPTW environment."""
 import torch
 from tensordict import TensorDict
 
@@ -28,8 +29,8 @@ class Environment(AECEnv):
         - each customer can only be visited after its appearance time.
         - each customer is visited exactly once.
         - each vehicle cannot exceed its capacity at any point.
-        - service at each node must begin within its time window; early arrivals wait.
-        - each vehicle must return to the depot before the depot's time window closes.
+        - time windows are soft: early arrivals wait, and late arrivals are allowed but penalized
+          proportionally to the lateness (``late_penalty``).
         - a vehicle is considered done when it returns to the depot.
 
     Finish Condition:
@@ -38,23 +39,23 @@ class Environment(AECEnv):
     def __init__(self,
                 instance_generator_object: InstanceBuilder,
                 obs_builder_object: ObservationBuilder,
-                agent_selector_object: BaseSelector,
+                agent_selector_object: BaseSelector | None,
                 reward_evaluator: RewardFn,
-                seed=None,
+                seed: Optional[int] = None,
                 device: Optional[str] = None,
                 batch_size: Optional[torch.Size] = None):
 
         """
-        Constructor.
+        Initialize the environment.
 
         Args:
-            instance_generator_object(InstanceBuilder): Generator instance.
-            obs_builder_object(ObservationBuilder): Observations instance.
-            agent_selector_object(BaseSelector): Agent selector instance
-            reward_evaluator(RewardFn): Reward evaluator instance.
-            seed(int): Random number generator seed. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to None.
-            batch_size(torch.Size): Batch size. Defaults to None.
+            instance_generator_object (InstanceBuilder): Generator instance.
+            obs_builder_object (ObservationBuilder): Observations instance.
+            agent_selector_object (BaseSelector): Agent selector instance.
+            reward_evaluator (RewardFn): Reward evaluator instance.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to None.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
         """
 
         self.version = 'v0'
@@ -102,10 +103,11 @@ class Environment(AECEnv):
         Retrieve agent environment observations.
 
         Args:
-            is_reset(bool): If the environment is on reset. Defauts to False.
+            td (TensorDict): Environment tensor instance.
+            obs_list (List[str], optional): List of observations to include. Defaults to None.
 
-        Returns
-            td_observations(TensorDict): Current agent observaions and masks dictionary.
+        Returns:
+            TensorDict: Environment tensor instance with the observations.
         """
 
         td_observations = self.obs_builder.get_observations(obs_list=obs_list)
@@ -132,10 +134,11 @@ class Environment(AECEnv):
         Compute a random action from available actions to current agent.
 
         Args:
-            td(TensorDict): Environment instance tensor.
+            td (TensorDict): Environment tensor instance.
+            action_without_agent (bool, optional): If True, sample a node that is feasible for at least one agent, without fixing the agent first. Defaults to False.
 
         Returns:
-            td(TensorDict): Environment instance tensor with updated action.
+            TensorDict: Environment tensor instance with the sampled action.
         """
         if action_without_agent:
             feasible_nodes = self.td_state['agents']['action_mask'].any(axis=1)
@@ -155,11 +158,11 @@ class Environment(AECEnv):
         Compute a random agent from available agents.
 
         Args:
-            td(TensorDict): Environment instance tensor.
-            agent_given_action(bool, optional): If True, sample an agent given the action. Defaults to False.
+            td (TensorDict): Environment tensor instance.
+            agent_given_action (bool, optional): If True, sample an agent given the action. Defaults to False.
 
         Returns:
-            td(TensorDict): Environment instance tensor with updated agent.
+            TensorDict: Environment tensor instance with the sampled agent.
         """
         if agent_given_action:
             action = td['next_action']
@@ -196,10 +199,10 @@ class Environment(AECEnv):
         Sample both agent and action simultaneously from the joint feasible space.
 
         Args:
-            td(TensorDict): Environment instance tensor.
+            td (TensorDict): Environment tensor instance.
 
         Returns:
-            td(TensorDict): Environment instance tensor with updated agent and action.
+            TensorDict: Environment tensor instance with the sampled agent and action.
         """
         num_nodes = self.num_nodes
 
@@ -219,12 +222,10 @@ class Environment(AECEnv):
 
     def _sample_speed(self):
         """
-
         Sample vehicle speed.
-        Args:
-            n/a.
+
         Returns:
-            speed(torch.Tensor): Sampled speed tensor.
+            torch.Tensor: Sampled speed tensor.
         """
         late = torch.empty((*self.batch_size, 1)).bernoulli_(self.late_p).to(self.device)
         rand = torch.randn_like(late).to(self.device)
@@ -246,18 +247,19 @@ class Environment(AECEnv):
         Reset the environment.
 
         Args:
-            num_agents(int, optional): Total number of agents. Defaults to None.
-            num_nodes(int, optional): Total number of nodes. Defaults to None.
-            instance_name(str, optional): Instance name. Defaults to None.
-            instance_dict(Dict, optional): Instance dictionary. Defaults to None.
-            force_visit(bool, optional): Force visit. Defaults to False.
-            sample_type(str): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to None.
-            seed(int, optional): Random number generator seed. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            instance_name (str, optional): Instance name. Defaults to None.
+            instance_dict (Dict, optional): Instance data to use instead of sampling a new instance. Defaults to None.
+            force_visit (bool, optional): If True, agents must visit all feasible nodes before returning to the depot. Defaults to False.
+            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
-            TensorDict: Environment information dictionary.
+            TensorDict: Environment tensor instance.
         """
 
         if seed is not None:
@@ -359,17 +361,19 @@ class Environment(AECEnv):
         Resets the environment and sets the current agent.
 
         Args:
-            num_agents(int, optional): Total number of agents. Defaults to None.
-            num_nodes(int, optional): Total number of nodes. Defaults to None.
-            instance_name(str, optional): Instance name. Defaults to None.
-            sample_type(str): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
-            force_visit(bool): It forces the agent to visit all feasible nodes before going back to depot. Defaults to True.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to None.
-            seed(int, optional): Random number generator seed. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            instance_name (str, optional): Instance name. Defaults to None.
+            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            instance_dict (Dict, optional): Instance data to use instead of sampling a new instance. Defaults to None.
+            force_visit (bool, optional): If True, agents must visit all feasible nodes before returning to the depot. Defaults to False.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
-            TensorDict: Environment information dictionary.
+            TensorDict: Environment tensor instance.
         """
         assert self.agent_selector is not None, f"this method requires an agent selector"
 
@@ -404,18 +408,20 @@ class Environment(AECEnv):
         Resets and observe the environment.
 
         Args:
-            num_agents(int, optional): Total number of agents. Defaults to None.
-            num_nodes(int, optional): Total number of nodes. Defaults to None.
-            instance_name(str, optional): Instance name. Defaults to None.
-            sample_type(str): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
-            force_visit(bool): It forces the agent to visit all feasible nodes before going back to depot. Defaults to True.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to None.
-            seed(int, optional): Random number generator seed. Defaults to None.
-            obs_list(List[str], optional): List of observations to be retrieved. Defaults to ['agents_action_mask'].
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            instance_name (str, optional): Instance name. Defaults to None.
+            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            instance_dict (Dict, optional): Instance data to use instead of sampling a new instance. Defaults to None.
+            force_visit (bool, optional): If True, agents must visit all feasible nodes before returning to the depot. Defaults to False.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            obs_list (List[str], optional): List of observations to include. Defaults to ['agents_action_mask'].
 
         Returns:
-            TensorDict: Environment information dictionary.
+            TensorDict: Environment tensor instance.
         """
 
         td = self.reset(num_agents=num_agents,
@@ -449,17 +455,20 @@ class Environment(AECEnv):
         Resets the environment, sets the current agent and makes observations.
 
         Args:
-            num_agents(int, optional): Total number of agents. Defaults to None.
-            num_nodes(int, optional): Total number of nodes. Defaults to None.
-            instance_name(str, optional): Instance name. Defaults to None.
-            sample_type(str): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
-            force_visit(bool): It forces the agent to visit all feasible nodes before going back to depot. Defaults to True.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to None.
-            seed(int, optional): Random number generator seed. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            instance_name (str, optional): Instance name. Defaults to None.
+            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            instance_dict (Dict, optional): Instance data to use instead of sampling a new instance. Defaults to None.
+            force_visit (bool, optional): If True, agents must visit all feasible nodes before returning to the depot. Defaults to False.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            obs_list (List[str], optional): List of observations to include. Defaults to ['agent_cur_node_idx', 'nodes_static', 'action_mask', 'agent'].
 
         Returns:
-            TensorDict: Environment information dictionary.
+            TensorDict: Environment tensor instance.
         """
         assert self.agent_selector is not None, f"this method requires an agent selector"
 
@@ -481,12 +490,6 @@ class Environment(AECEnv):
 
         """
         Update actions feasibility.
-
-        Args:
-            n/a.
-
-        Returns:
-            None.
         """
 
         cust_mask = self.td_state['appear_time'] <= self.td_state['cur_agent']['cur_time']
@@ -510,12 +513,6 @@ class Environment(AECEnv):
     def _update_all_agents_feasibility(self):
         """
         Update actions feasibility for all agents simultaneously.
-
-        Args:
-            n/a.
-
-        Returns:
-            None.
         """
         # appear_time: [B, num_nodes], cur_time: [B, num_agents]
         # cust_mask: [B, num_agents, num_nodes]
@@ -597,10 +594,7 @@ class Environment(AECEnv):
         Update done state.
 
         Args:
-            action(torch.Tensor): Tensor with agent moves.
-
-        Returns:
-            None.
+            action (torch.Tensor): Tensor with agent moves.
         """
 
         former_done = self.td_state['done'].clone()
@@ -622,10 +616,7 @@ class Environment(AECEnv):
         Update environment state.
 
         Args:
-            action(torch.Tensor): Tensor with agent moves.
-
-        Returns:
-            None.
+            action (torch.Tensor): Tensor with agent moves.
         """
 
         loc = self.td_state['coords'].gather(1, self.td_state['cur_agent']['cur_node_idx'][:,:,None].expand(-1, -1, 2))
@@ -706,7 +697,11 @@ class Environment(AECEnv):
         Set and update the next active agent.
 
         Args:
-            agent_idx (int): The index of the agent to set as current.
+            cur_agent_idx (torch.Tensor): Current agent id.
+            td (TensorDict): Environment tensor instance.
+
+        Returns:
+            TensorDict: Environment tensor instance with the updated current agent.
         """
         agent_idx = cur_agent_idx
         assert self.td_state['agents']['active_agents_mask'].gather(1, agent_idx).all(), f"not feasible agent"
@@ -728,10 +723,7 @@ class Environment(AECEnv):
         Update current agent.
 
         Args:
-            cur_agent_idx(torch.Tensor): Current agent id.
-
-        Returns:
-            None.
+            cur_agent_idx (torch.Tensor): Current agent id.
         """
 
         self.td_state['cur_agent_idx'] =  cur_agent_idx
@@ -755,10 +747,7 @@ class Environment(AECEnv):
         Update agents and actions in solution.
 
         Args:
-            action(torch.Tensor): Tensor with agent moves.
-
-        Returns:
-            None.
+            action (torch.Tensor): Tensor with agent moves.
         """
 
         # update solution dic
@@ -772,16 +761,22 @@ class Environment(AECEnv):
         else:
             self.td_state['solution','agents'] = self.td_state['cur_agent_idx']
 
+        # sampled (stochastic) travel times, needed to replay the schedule
+        if 'travel_times' in self.td_state['solution'].keys():
+            self.td_state['solution','travel_times'] = torch.concat( [self.td_state['solution','travel_times'], self.td_state['cur_agent','cur_travel_time']], dim=-1)
+        else:
+            self.td_state['solution','travel_times'] = self.td_state['cur_agent','cur_travel_time'].clone()
+
 
     def step(self, td: TensorDict) -> TensorDict:
         """
         Perform an environment step for active agent.
 
         Args:
-            td(TensorDict): Environment tensor instance.
+            td (TensorDict): Environment tensor instance.
 
         Returns:
-            td(TensorDict): Updated environment tensor instance.
+            TensorDict: Updated environment tensor instance.
         """
 
         if 'next_agent' in td.keys():
@@ -825,11 +820,11 @@ class Environment(AECEnv):
         Perform an environment step for active agent.
 
         Args:
-            td(TensorDict): Environment tensor instance.
-            obs_list (Optional[List[str]]): List of observation keys to include. Defaults to ['agents_action_mask'].
+            td (TensorDict): Environment tensor instance.
+            obs_list (List[str], optional): List of observations to include. Defaults to ['agents_action_mask'].
 
         Returns:
-            td(TensorDict): Updated environment tensor instance.
+            TensorDict: Updated environment tensor instance.
         """
         td = self.step(td)
         td = self.observe(td, obs_list=obs_list)
@@ -840,10 +835,10 @@ class Environment(AECEnv):
         Perform an environment step for active agent.
 
         Args:
-            td(TensorDict): Environment tensor instance.
+            td (TensorDict): Environment tensor instance.
 
         Returns:
-            td(TensorDict): Updated environment tensor instance.
+            TensorDict: Updated environment tensor instance.
         """
         assert self.agent_selector is not None, f"this method requires an agent selector"
 
@@ -863,10 +858,11 @@ class Environment(AECEnv):
         Perform an environment step for active agent.
 
         Args:
-            td(TensorDict): Environment tensor instance.
+            td (TensorDict): Environment tensor instance.
+            obs_list (List[str], optional): List of observations to include. Defaults to ['action_mask', 'agent', 'nodes_dynamic'].
 
         Returns:
-            td(TensorDict): Updated environment tensor instance.
+            TensorDict: Updated environment tensor instance.
         """
         assert self.agent_selector is not None, f"this method requires an agent selector"
 
@@ -878,30 +874,44 @@ class Environment(AECEnv):
         """
         Check if solution is valid according to DSVRPTW constraints.
 
-        Args:
-            N/a.
-
-        Returns:
-            None. Raises AssertionError if invalid.
+        Raises:
+            AssertionError: If the solution violates a problem constraint.
         """
 
-        curr_node = torch.zeros(*self.batch_size, dtype=torch.int64, device=self.device)
-        curr_time = torch.zeros(*self.batch_size, dtype=torch.float32, device=self.device)
+        start_time = self.td_state['start_time'].view(-1)
+        curr_time = start_time.clone()
         visited_nodes = torch.zeros(*self.batch_size, self.num_nodes, dtype=torch.int64, device=self.device)
+        late_penalty = torch.zeros(*self.batch_size, dtype=torch.float32, device=self.device)
 
         sorted_indices = torch.argsort(self.td_state['solution']['agents'], dim=-1, stable=True)
         sorted_data = torch.gather(self.td_state['solution']['actions'], dim=-1, index=sorted_indices)
+        # travel times were sampled stochastically during the episode: replay the recorded ones
+        sorted_travel_times = torch.gather(self.td_state['solution']['travel_times'], dim=-1, index=sorted_indices)
         demand = self.td_state['demands'].gather(1, sorted_data)
 
         for ii in range(sorted_data.size(1)):
             next_node = sorted_data[:, ii]
+            is_depot = next_node == 0
 
-            curr_loc = gather_by_index(self.td_state['coords'], curr_node)
-            next_loc = gather_by_index(self.td_state['coords'], next_node)
+            # Dynamic customers can only be served once they have appeared
+            appear_time = gather_by_index(self.td_state['appear_time'], next_node)
+            assert torch.all(is_depot | (appear_time <= curr_time)), "Customer was visited before it appeared."
+
+            # Soft time windows: early arrivals wait, late arrivals are penalized
+            arrivej = curr_time + sorted_travel_times[:, ii]
+            tw_low = gather_by_index(self.td_state['tw_low'], next_node)
+            tw_high = gather_by_index(self.td_state['tw_high'], next_node)
+            waitj = torch.clip(tw_low - arrivej, min=0)
+            late_penalty = late_penalty - self.late_penalty * torch.clip(arrivej - tw_high, min=0)
+            curr_time = arrivej + waitj + gather_by_index(self.td_state['service_time'], next_node)
+            curr_time = torch.where(is_depot, start_time, curr_time)
 
             # Mark node as visited
             fill = visited_nodes.gather(1, next_node.unsqueeze(-1))
             visited_nodes.scatter_(1, next_node.unsqueeze(-1), fill + 1)
+
+        recorded_penalty = self.td_state['agents']['cum_penalty'].sum(-1)
+        assert torch.allclose(late_penalty, recorded_penalty, atol=1e-4), "Late arrival penalties do not match the time windows."
 
         visited_nodes_exc_depot = visited_nodes[:, 1:]
         assert torch.all((visited_nodes_exc_depot == 0) | (visited_nodes_exc_depot == 1)), "Nodes were visited more than once!"

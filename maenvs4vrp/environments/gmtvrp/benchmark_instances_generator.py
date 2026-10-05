@@ -1,3 +1,4 @@
+"""Benchmark instance generator for the GMTVRP environment."""
 import torch
 from tensordict import TensorDict
 
@@ -14,6 +15,7 @@ from huggingface_hub import hf_hub_download
 import shutil
 
 import logging
+import warnings
 
 BENCHMARK_INSTANCES_PATH = 'gmtvrp/data/benchmark'
 
@@ -36,14 +38,16 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         """
         Get list of possible instances from benchmark files.
 
-        Args:
-            n/a.
-
         Returns:
-            None.
+            dict: Keys '50_test', '100_test', '50_validation' and '100_validation'; values are lists of instance
+                  name strings, or empty lists when data is not available locally.
         """
 
-        cls.download_and_copy_instances()
+        try:
+            cls.download_and_copy_instances()
+        except Exception as e:  # offline or Hugging Face unreachable: list what is available locally
+            warnings.warn(f"Benchmark instances could not be downloaded ({type(e).__name__}); "
+                          "only the instances available locally are listed.", RuntimeWarning)
 
         dataset = ['50_test', '100_test','50_validation', '100_validation']
         base_dir = path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -53,6 +57,8 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
             numb, settype = pset.split('_')
             for problem in VARIANT_PRESETS:
                 full_dir = path.join(base_dir, BENCHMARK_INSTANCES_PATH, problem)
+                if not path.isdir(os.path.join(full_dir, settype)):
+                    continue
 
                 data_dir = os.listdir(os.path.join(full_dir, settype))
                 data_files += [BENCHMARK_INSTANCES_PATH+'/'+problem+'/'+settype+'/'+item.split('.')[0] for item in data_dir if numb in item]
@@ -60,7 +66,15 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
             inst_dic[pset] = data_files
         return inst_dic
 
+    @staticmethod
     def check_instance_folders(base_dir, env):
+        """
+        Warn about missing benchmark instance files.
+
+        Args:
+            base_dir (str): Base directory of the environments package.
+            env (str): Environment name.
+        """
         base_benchmark_dir = os.path.join(base_dir, env, "data/benchmark")
 
         for variant in VARIANT_PRESETS:
@@ -77,12 +91,6 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
     def download_and_copy_instances(cls):
         """
         Download benchmark instances from HuggingFace if they are not locally present.
-
-        Args:
-            n/a.
-
-        Returns:
-            None.
         """
 
         base_dir = path.dirname(path.dirname(path.abspath(__file__)))
@@ -90,31 +98,27 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         direct = "data/benchmark"
         directory_to_be_created = os.path.join(base_dir, env, direct)
 
-        if os.path.isdir(directory_to_be_created):
-            cls.check_instance_folders(base_dir, env)
+        # download every missing file, so an interrupted download is completed on the next call
+        logged = False
+        for variant in VARIANT_PRESETS:
+            for instance_type in ['val', 'test']:
+                for instance_name in ['100.npz', '50.npz']:
+                    instance_type_2 = "validation" if instance_type == "val" else "test"
+                    full_directory = os.path.join(base_dir, env, f"data/benchmark/{variant}/{instance_type_2}")
+                    if os.path.isfile(os.path.join(full_directory, instance_name)):
+                        continue
+                    if not logged:
+                        log.warning(f"Downloading benchmark files from HuggingFace to {directory_to_be_created}...")
+                        logged = True
 
-        if not (os.path.isdir(directory_to_be_created)):
-            os.makedirs(directory_to_be_created)
+                    file_path = hf_hub_download(
+                        repo_id="ai4co/routefinder",
+                        repo_type="dataset",
+                        filename=f"data/{variant}/{instance_type}/{instance_name}"
+                    )
 
-            log.warning(f"Downloading benchmark files from HuggingFace to {directory_to_be_created}...")
-
-            for variant in VARIANT_PRESETS:
-                for instance_type in ['val', 'test']:
-                    for instance_name in ['100.npz', '50.npz']:
-                        fname=f"data/{variant}/{instance_type}/{instance_name}"
-
-                        file_path = hf_hub_download(
-                            repo_id="ai4co/routefinder",
-                            repo_type="dataset",
-                            filename=fname
-                        )
-
-                        instance_type_2 = "validation" if instance_type == "val" else "test"
-
-                        full_directory = os.path.join(base_dir, env, f"data/benchmark/{variant}/{instance_type_2}")
-                        if not (os.path.isdir(full_directory)):
-                            os.makedirs(full_directory)
-                        shutil.copy(file_path, full_directory)
+                    os.makedirs(full_directory, exist_ok=True)
+                    shutil.copy(file_path, full_directory)
 
     def __init__(
         self,
@@ -132,15 +136,14 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Constructor. Create an instance space of one or several sets of data.
 
         Args:
-            problem_type(set): Problem type. Defaults to "all".
-            instance_type(str): Instance type. It must be "50_test", "100_test", "50_validation" or "100_validation". Defaults to None.
-            set_of_instances(set): Set of instances paths. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
-            batch_size(torch.Size, optional): Batch size. If not specified, defaults to 1000.
-            seed(int): Random number generator seed. Defaults to None.
-
-        Returns:
-            None.
+            problem_type (set, optional): Problem type. Defaults to "all".
+            instance_type (str, optional): Instance type. It must be "50_test", "100_test", "50_validation" or "100_validation". Defaults to None.
+            set_of_instances (set, optional): Set of instances file names. Defaults to None.
+            instance_name (str, optional): Alias of ``instance_type``. Defaults to None.
+            list_of_instances (list, optional): List of instances file names. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            batch_size (torch.Size, optional): Batch size. Defaults to 1000.
+            seed (int, optional): Random number generator seed. Defaults to None.
         """
 
         self.download_and_copy_instances() #If instances are not on local machine, they'll be downloaded from RouteFinder's HuggingFace
@@ -180,10 +183,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Load every instance on set_of_instances set.
 
         Args:
-            set_of_instances(set): Set of instances file names. Defaults to None.
-
-        Returns:
-            None.
+            set_of_instances (set, optional): Set of instances file names. Defaults to None.
         """
         if set_of_instances:
             self.set_of_instances = set_of_instances
@@ -198,7 +198,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Read instance data from file. Benchmark's instance keys are translated into our keys.
 
         Args:
-            instance_name(str): Instance path.
+            instance_name (str): Instance path.
 
         Returns:
             Dict: Instance data.
@@ -214,6 +214,8 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
 
         loaded_data = np.load(file_path)
         np_instance = {key: loaded_data[key] for key in loaded_data.files}
+        # each file has its own number of instances
+        self.batch_size = torch.Size([np_instance['locs'].shape[0]])
 
         data = TensorDict({}, batch_size=self.batch_size, device=self.device)
         for key in np_instance:
@@ -238,6 +240,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         zeros =  torch.zeros((*self.batch_size, 1), dtype = torch.int64, device=self.device)
         new_data['linehaul_demands'] = torch.concat([zeros, data['demand_linehaul']], dim=1) #There're always linehauls
         new_data['capacity'] = data['vehicle_capacity'] #There're always capacities
+        new_data['original_capacity'] = data['vehicle_capacity'].clone()
         self.depot_idx = 0
         new_data['depot_idx'] = self.depot_idx * torch.ones((*self.batch_size, 1), dtype = torch.int64, device=self.device)
         new_data['speed'] = data['speed'] #There's always speeed etc.
@@ -248,6 +251,9 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
             new_data['backhaul_demands'] = torch.zeros((*self.batch_size, num_nodes), dtype=torch.float32, device=self.device)
         if 'backhaul_class' in data.keys():
             new_data['backhaul_class'] = data['backhaul_class']
+        else:
+            # variants without backhauls: class 1 (unmixed) is a neutral default
+            new_data['backhaul_class'] = torch.ones((*self.batch_size, 1), dtype=torch.int64, device=self.device)
         if 'time_windows' in data.keys():
             new_data['time_windows'] = data['time_windows']
         else:
@@ -255,6 +261,8 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
             new_data['time_windows'][:,:,1] = float('inf')
         if 'service_time' in data.keys():
             new_data['service_time'] = data['service_time']
+        else:
+            new_data['service_time'] = torch.zeros((*self.batch_size, num_nodes), dtype=torch.float32, device=self.device)
         if 'distance_limit' in data.keys():
             new_data['distance_limits'] = data['distance_limit']
         else:
@@ -289,12 +297,11 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Get an instance with custom number of agents.
 
         Args:
-            instance_name(str): Instance file name.
-            num_agents(int): Number of agents. Defaults to None.
+            instance_name (str): Instance file name.
+            num_agents (int, optional): Total number of agents. Defaults to None.
 
         Returns:
             Dict: Instance data.
-
         """
         instance = self.instances_data.get(instance_name)
 
@@ -334,34 +341,64 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
                                seed: int = None,
                                device: Optional[str] = None)-> Dict:
         """
-       Sample one instance from instance space, randomly adjusting the nodes.
+        Sample one instance from instance space, randomly adjusting the nodes.
+
+         Args:
+             instance_name(str): Instance file path. Defaults to None.
+             num_agents(int): Total number of agents. Defaults to None.
+             num_nodes(int): Total number of nodes. Defaults to None.
+             min_coords(float): Minimum number of coords. Defaults to None.
+             max_coords(float): Maximum number of coords. Defaults to None.
+             capacity(int): Vehicles' capacity. Defaults to None.
+             service_time(float): Service time. Defaults to None.
+             min_demands(int): Minimum number of demands. Defaults to None.
+             max_demands(int): Maximum number of demands. Defaults to None.
+             min_backhaul(int): Minimum number of backhauls. Defaults to None.
+             max_backhaul(int): Maximum number of backhauls. Defaults to None.
+             max_time(float): Maximum route time. Defaults to None.
+             backhaul_ratio(float): Ratio of backhaul demands. Defaults to None.
+             backhaul_class(int): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to None.
+             sample_backhaul_class(bool): If backhaul class is sampled across batches. Defaults to False.
+             max_distance_limit(float): Route distance limits. Defaults to None.
+             speed(float): Vehicles' speed. Defaults to None.
+             initial_load(float): Vehicles' initial load. Defaults to None.
+             subsample(bool): If problem variants are to be sampled. Defaults to True.
+             variant_preset(str): Variant preset to be sampled. Defaults to None.
+             use_combinations(bool): It considers combinations for which sampling mask the instance is defined. Defaults to False.
+             force_visit(bool): It forces the agent to visit all feasible nodes before going back to depot. Defaults to True.
+             batch_size(torch.Size, optional): Batch size. Defaults to None.
+             seed(int): Random number generator seed. Defaults to None.
+             device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
+
+         Returns:
+             Dict: Instance data.
 
         Args:
-            instance_name(str): Instance file path. Defaults to None.
-            num_agents(int): Total number of agents. Defaults to None.
-            num_nodes(int): Total number of nodes. Defaults to None.
-            min_coords(float): Minimum number of coords. Defaults to None.
-            max_coords(float): Maximum number of coords. Defaults to None.
-            capacity(int): Vehicles' capacity. Defaults to None.
-            service_time(float): Service time. Defaults to None.
-            min_demands(int): Minimum number of demands. Defaults to None.
-            max_demands(int): Maximum number of demands. Defaults to None.
-            min_backhaul(int): Minimum number of backhauls. Defaults to None.
-            max_backhaul(int): Maximum number of backhauls. Defaults to None.
-            max_time(float): Maximum route time. Defaults to None.
-            backhaul_ratio(float): Ratio of backhaul demands. Defaults to None.
-            backhaul_class(int): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to None.
-            sample_backhaul_class(bool): If backhaul class is sampled across batches. Defaults to False.
-            max_distance_limit(float): Route distance limits. Defaults to None.
-            speed(float): Vehicles' speed. Defaults to None.
-            initial_load(float): Vehicles' initial load. Defaults to None.
-            subsample(bool): If problem variants are to be sampled. Defaults to True.
-            variant_preset(str): Variant preset to be sampled. Defaults to None.
-            use_combinations(bool): It considers combinations for which sampling mask the instance is defined. Defaults to False.
-            force_visit(bool): It forces the agent to visit all feasible nodes before going back to depot. Defaults to True.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            seed(int): Random number generator seed. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
+            instance_name (str, optional): Instance file path. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            min_coords (float, optional): Minimum number of coords. Defaults to None.
+            max_coords (float, optional): Maximum number of coords. Defaults to None.
+            capacity (int, optional): Capacity of each agent. Defaults to None.
+            service_time (float, optional): Service time. Defaults to None.
+            min_demands (int, optional): Minimum number of demands. Defaults to None.
+            max_demands (int, optional): Maximum number of demands. Defaults to None.
+            min_backhaul (int, optional): Minimum number of backhauls. Defaults to None.
+            max_backhaul (int, optional): Maximum number of backhauls. Defaults to None.
+            max_time (float, optional): Maximum route time. Defaults to None.
+            backhaul_ratio (float, optional): Ratio of backhaul demands. Defaults to None.
+            backhaul_class (int, optional): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to None.
+            sample_backhaul_class (bool, optional): If backhaul class is sampled across batches. Defaults to False.
+            max_distance_limit (float, optional): Route distance limits. Defaults to None.
+            speed (float, optional): Vehicles' speed. Defaults to None.
+            initial_load (float, optional): Vehicles' initial load. Defaults to None.
+            subsample (bool, optional): If problem variants are to be sampled. Defaults to True.
+            variant_preset (str, optional): Variant preset to be sampled. Defaults to None.
+            use_combinations (bool, optional): It considers combinations for which sampling mask the instance is defined. Defaults to False.
+            force_visit (bool, optional): If True, agents must visit all feasible nodes before returning to the depot. Defaults to True.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to None.
 
         Returns:
             Dict: Instance data.
@@ -406,6 +443,9 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
             new_data['backhaul_demands'] = data['backhaul_demands'][batch_idx, index]
         if 'backhaul_class' in data.keys():
             new_data['backhaul_class'] = data['backhaul_class']
+        else:
+            # variants without backhauls: class 1 (unmixed) is a neutral default
+            new_data['backhaul_class'] = torch.ones((*self.batch_size, 1), dtype=torch.int64, device=self.device)
         if 'time_windows' in data.keys():
             new_data['time_windows'] = data['time_windows'][batch_idx, index]
         if 'service_time' in data.keys():
@@ -443,7 +483,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Sample one instance from instance set.
 
         Args:
-            seed(int): Random number generator seed. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
 
         Returns:
             str: Instance sample name.
@@ -486,36 +526,39 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Sample one instance from instance space.
 
         Args:
-            sample_type(str): Type of instance to sample. It can be "random" or "augment". Defaults to "random".
-            instance_name(str): Instance file path. Defaults to None.
-            num_agents(int): Total number of agents. Defaults to None.
-            num_nodes(int): Total number of nodes. Defaults to None.
-            min_coords(float): Minimum number of coords. Defaults to None.
-            max_coords(float): Maximum number of coords. Defaults to None.
-            capacity(int): Vehicles' capacity. Defaults to None.
-            service_time(float): Service time. Defaults to None.
-            min_demands(int): Minimum number of demands. Defaults to None.
-            max_demands(int): Maximum number of demands. Defaults to None.
-            min_backhaul(int): Minimum number of backhauls. Defaults to None.
-            max_backhaul(int): Maximum number of backhauls. Defaults to None.
-            max_time(float): Maximum route time. Defaults to None.
-            backhaul_ratio(float): Ratio of backhaul demands. Defaults to None.
-            backhaul_class(int): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to None.
-            sample_backhaul_class(bool): If backhaul class is sampled across batches. Defaults to False.
-            max_distance_limit(float): Route distance limits. Defaults to None.
-            speed(float): Vehicles' speed. Defaults to None.
-            initial_load(float): Vehicles' initial load. Defaults to None.
-            subsample(bool): If problem variants are to be sampled. Defaults to True.
-            variant_preset(str): Variant preset to be sampled. Defaults to None.
-            use_combinations(bool): It considers combinations for which sampling mask the instance is defined. Defaults to False.
-            force_visit(bool): It forces the agent to visit all feasible nodes before going back to depot. Defaults to True.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            seed(int): Random number generator seed. Defaults to None.
-            n_augment(int, optional): Number of augmentations. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
+            sample_type (str, optional): Sample type. It can be "random" or "saved". Defaults to "random".
+            instance_name (str, optional): Instance name. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            min_coords (float, optional): Minimum number of coords. Defaults to None.
+            max_coords (float, optional): Maximum number of coords. Defaults to None.
+            capacity (int, optional): Capacity of each agent. Defaults to None.
+            service_time (float, optional): Service time. Defaults to None.
+            min_demands (int, optional): Minimum number of demands. Defaults to None.
+            max_demands (int, optional): Maximum number of demands. Defaults to None.
+            min_backhaul (int, optional): Minimum number of backhauls. Defaults to None.
+            max_backhaul (int, optional): Maximum number of backhauls. Defaults to None.
+            max_time (float, optional): Maximum route time. Defaults to None.
+            backhaul_ratio (float, optional): Ratio of backhaul demands. Defaults to None.
+            backhaul_class (int, optional): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to None.
+            sample_backhaul_class (bool, optional): If backhaul class is sampled across batches. Defaults to False.
+            max_distance_limit (float, optional): Route distance limits. Defaults to None.
+            speed (float, optional): Vehicles' speed. Defaults to None.
+            initial_load (float, optional): Vehicles' initial load. Defaults to None.
+            subsample (bool, optional): If problem variants are to be sampled. Defaults to True.
+            variant_preset (str, optional): Variant preset to be sampled. Defaults to None.
+            use_combinations (bool, optional): It considers combinations for which sampling mask the instance is defined. Defaults to False.
+            force_visit (bool, optional): If True, agents must visit all feasible nodes before returning to the depot. Defaults to True.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to None.
 
         Returns:
             Dict: Instance data.
+
+        Raises:
+            ValueError: If ``sample_type`` is not "random" or "saved".
         """
         if seed is not None:
             self._set_seed(seed)
@@ -631,7 +674,9 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
                                                     batch_size = batch_size,
                                                     seed = seed,
                                                     device = device)
-        else:
+        elif sample_type=='saved':
             instance = self.get_instance(instance_name, num_agents=num_agents)
+        else:
+            raise ValueError(f"Unknown sample_type '{sample_type}'. Expected 'random' or 'saved'.")
 
         return instance

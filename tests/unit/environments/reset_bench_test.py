@@ -1,132 +1,32 @@
+"""Episodes on benchmark instances (only instance sets available locally are used, so no network is needed)."""
 import pytest
-import importlib
 
-ENVIRONMENT_LIST = ['cvrpstw', 'toptw', 'cvrpstw', 'sdvrptw', 'pcvrptw', 'pdptw', 'mdvrptw', 'mtvrp', 'gmtvrp', 'mtdvrp', 'gmtdvrp']
+from tests.helpers import PKG_DIR, make_env, module, rollout
 
-
-@pytest.fixture(params=ENVIRONMENT_LIST)
-def environment_benchmark_instance_fixture(request):
-    env_agent_selector_module_name = f'maenvs4vrp.environments.{request.param}.env_agent_selector'
-    env_agent_selector = importlib.import_module(env_agent_selector_module_name).AgentSelector()
-
-    observations_module_name = f'maenvs4vrp.environments.{request.param}.observations'
-    observations = importlib.import_module(observations_module_name).Observations()
-
-    generator_module_name = f'maenvs4vrp.environments.{request.param}.benchmark_instances_generator'
-    generator_module = importlib.import_module(generator_module_name)
-    list_of_instances = generator_module.BenchmarkInstanceGenerator.get_list_of_instances()
-    instance_names = list_of_instances.keys()
-    instance_name = list(instance_names)[0]
-    list_of_instances = list_of_instances.get(instance_name)
-    generator = generator_module.BenchmarkInstanceGenerator(instance_name=instance_name,
-                                                            list_of_instances=list_of_instances)
-
-    environment_module_name = f'maenvs4vrp.environments.{request.param}.env'
-    environment_module = importlib.import_module(environment_module_name)
-
-    env_agent_reward_module_name = f'maenvs4vrp.environments.{request.param}.env_agent_reward'
-    reward_evaluator = importlib.import_module(env_agent_reward_module_name).DenseReward()
-
-    environment = environment_module.Environment(instance_generator_object=generator,
-                                                 obs_builder_object=observations,
-                                                 agent_selector_object=env_agent_selector,
-                                                 reward_evaluator=reward_evaluator,
-                                                 )
-    return environment
-
-@pytest.fixture(params=ENVIRONMENT_LIST)
-def environment_benchmark_instance_fixture_st(request):
-    env_agent_selector_module_name = f'maenvs4vrp.environments.{request.param}.env_agent_selector'
-    env_agent_selector = importlib.import_module(env_agent_selector_module_name).SmallestTimeAgentSelector()
-
-    observations_module_name = f'maenvs4vrp.environments.{request.param}.observations'
-    observations = importlib.import_module(observations_module_name).Observations()
-
-    generator_module_name = f'maenvs4vrp.environments.{request.param}.benchmark_instances_generator'
-    generator_module = importlib.import_module(generator_module_name)
-    list_of_benchmark_instances = generator_module.BenchmarkInstanceGenerator.get_list_of_instances()
-    instance_names = list_of_benchmark_instances.keys()
-    instance_name = list(instance_names)[0]
-    list_of_instances = list_of_benchmark_instances.get(instance_name)
-    generator = generator_module.BenchmarkInstanceGenerator(instance_name=instance_name,
-                                                            list_of_instances=list_of_instances)
-
-    environment_module_name = f'maenvs4vrp.environments.{request.param}.env'
-    environment_module = importlib.import_module(environment_module_name)
-
-    env_agent_reward_module_name = f'maenvs4vrp.environments.{request.param}.env_agent_reward'
-    reward_evaluator = importlib.import_module(env_agent_reward_module_name).DenseReward()
-
-    environment = environment_module.Environment(instance_generator_object=generator,
-                                                 obs_builder_object=observations,
-                                                 agent_selector_object=env_agent_selector,
-                                                 reward_evaluator=reward_evaluator,
-                                                 )
-    return environment
+BENCHMARK_ENVS = sorted(p.parent.name for p in (PKG_DIR / "environments").glob("*/benchmark_instances_generator.py"))
 
 
-@pytest.fixture(params=ENVIRONMENT_LIST)
-def environment_benchmark_instance_fixture_rand(request):
-    env_agent_selector_module_name = f'maenvs4vrp.environments.{request.param}.env_agent_selector'
-    env_agent_selector = importlib.import_module(env_agent_selector_module_name).RandomSelector()
-
-    observations_module_name = f'maenvs4vrp.environments.{request.param}.observations'
-    observations = importlib.import_module(observations_module_name).Observations()
-
-    generator_module_name = f'maenvs4vrp.environments.{request.param}.benchmark_instances_generator'
-    generator_module = importlib.import_module(generator_module_name)
-    list_of_benchmark_instances = generator_module.BenchmarkInstanceGenerator.get_list_of_instances()
-    instance_names = list_of_benchmark_instances.keys()
-    instance_name = list(instance_names)[0]
-    list_of_instances = list_of_benchmark_instances.get(instance_name)
-    generator = generator_module.BenchmarkInstanceGenerator(instance_name=instance_name,
-                                                            list_of_instances=list_of_instances)
-
-    environment_module_name = f'maenvs4vrp.environments.{request.param}.env'
-    environment_module = importlib.import_module(environment_module_name)
-
-    env_agent_reward_module_name = f'maenvs4vrp.environments.{request.param}.env_agent_reward'
-    reward_evaluator = importlib.import_module(env_agent_reward_module_name).DenseReward()
-
-    environment = environment_module.Environment(instance_generator_object=generator,
-                                                 obs_builder_object=observations,
-                                                 agent_selector_object=env_agent_selector,
-                                                 reward_evaluator=reward_evaluator,
-                                                 )
-    return environment
-
-# reset tests
-def test_benchmark_instance_env_reset_gives_no_error(environment_benchmark_instance_fixture):
-    env = environment_benchmark_instance_fixture
-    td = env.reset()
+def local_benchmark_generator(env_name):
+    """Benchmark generator for the first instance set available locally, or skip the test."""
+    gen_cls = module(env_name, "benchmark_instances_generator").BenchmarkInstanceGenerator
+    for instance_name, instances in gen_cls.get_list_of_instances().items():
+        if instances:
+            return gen_cls(instance_name=instance_name, list_of_instances=list(instances)[:2])
+    pytest.skip(f"no {env_name} benchmark instances available locally")
 
 
-# observe
-def test_benchmark_instance_env_observe_gives_no_error(environment_benchmark_instance_fixture):
-    env = environment_benchmark_instance_fixture
-    td = env.reset()
-    td_observations = env.observe(td)
+@pytest.mark.parametrize("env_name", BENCHMARK_ENVS)
+def test_benchmark_reset_and_observe(env_name):
+    env = make_env(env_name, generator=local_benchmark_generator(env_name), batch_size=None)
+    td = env.reset_agent_select()
+    td = env.observe(td)
+    assert "observations" in td.keys()
 
 
-# agent iterator
-def test_benchmark_instance_env_agent_iterator_gives_no_error(environment_benchmark_instance_fixture):
-    env = environment_benchmark_instance_fixture
-    td = env.reset_agent_select_observe()
-    while not td["done"].all():  
-        td = env.sample_action(td)
-        td = env.step(td)
-
-
-def test_benchmark_instance_env_smallesttime_agent_iterator_gives_no_error(environment_benchmark_instance_fixture_st):
-    env = environment_benchmark_instance_fixture_st
-    td = env.reset_agent_select_observe()
-    while not td["done"].all():  
-        td = env.sample_action(td)
-        td = env.step(td)
-
-def test_benchmark_instance_env_rand_agent_iterator_gives_no_error(environment_benchmark_instance_fixture_rand):
-    env = environment_benchmark_instance_fixture_rand
-    td = env.reset_agent_select_observe()
-    while not td["done"].all():  
-        td = env.sample_action(td)
-        td = env.step(td)
+@pytest.mark.parametrize("env_name", BENCHMARK_ENVS)
+@pytest.mark.parametrize("selector", ["AgentSelector", "SmallestTimeAgentSelector", "RandomSelector"])
+def test_benchmark_episode(env_name, selector):
+    env = make_env(env_name, selector=selector, generator=local_benchmark_generator(env_name), batch_size=None)
+    td = rollout(env, "select")
+    assert td["done"].all()
+    env.check_solution_validity()

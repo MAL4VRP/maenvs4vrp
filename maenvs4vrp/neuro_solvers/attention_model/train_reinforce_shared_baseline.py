@@ -41,12 +41,26 @@ from attention_model.policy_net_am import PolicyNet
 
 def save_model_state_dict(save_path, model_policy):
     # save the policy state dict
+    """
+    Save the policy state dict to disk.
+
+    Args:
+        save_path: File path where the state dict is saved.
+        model_policy: Policy model to save.
+    """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     state_dict = model_policy.to("cpu").state_dict()
     torch.save(state_dict, save_path)
 
 
 def set_random_seed(seed, torch_deterministic):
+    """
+    Seed the random number generators.
+
+    Args:
+        seed (int): Random number generator seed.
+        torch_deterministic: If True, make cuDNN deterministic.
+    """
     random.seed(seed)
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = torch_deterministic
@@ -54,12 +68,18 @@ def set_random_seed(seed, torch_deterministic):
 
 def reinforce_shared_baseline_loss(logprobs, rewards, entropy, step_mask, args, reduction = 'mean'):
     r"""
-    :param logprobs:  Iterable of length :math:`L` on tensors of size :math:`N \times 1`
-    :param rewards:   Iterable of length :math:`L` on tensors of size :math:`N \times 1`
-                    or single tensor of size :math:`N \times 1` to use rewards cumulated on the whole trajectory
-    :param reduction: 'none' No reduction,
-                      'sum'  Compute sum of loss on batch,
-                      'mean' Compute mean of loss on batch
+    REINFORCE loss with a shared baseline (mean reward over the ``n_augment`` copies of each instance).
+
+    Args:
+        logprobs (list[torch.Tensor]): Log-probabilities of the selected actions, :math:`L` tensors of size :math:`N \times 1`.
+        rewards (list[torch.Tensor]): Rewards of each step, :math:`L` tensors of size :math:`N \times 1`.
+        entropy (list[torch.Tensor]): Entropy of the action distributions at each step.
+        step_mask (list[torch.Tensor]): Mask of the valid steps.
+        args (argparse.Namespace): Training arguments (``n_augment``, ``batch_size``, ``norm_adv``, ...).
+        reduction (str, optional): Loss reduction: "none", "sum" or "mean". Defaults to "mean".
+
+    Returns:
+        torch.Tensor: Loss.
     """
 
     logprobs = torch.stack(logprobs)
@@ -91,6 +111,20 @@ def reinforce_shared_baseline_loss(logprobs, rewards, entropy, step_mask, args, 
 
 
 def train_epoch(args, env, policy, optim, ep, writer):
+    """
+    Train the policy for one epoch.
+
+    Args:
+        args (argparse.Namespace): Command line arguments.
+        env (AECEnv): Training environment.
+        policy: Policy network.
+        optim: Optimizer.
+        ep: Current epoch.
+        writer: TensorBoard summary writer.
+
+    Returns:
+        tuple: Epoch averages of the loss, log-probability, reward and gradient norm.
+    """
     policy.train()
 
     ep_loss = 0
@@ -199,6 +233,19 @@ def train_epoch(args, env, policy, optim, ep, writer):
     return tuple(stat / args.iter_count for stat in (ep_loss, ep_prob, ep_rew, ep_norm))
 
 def test_epoch(args, test_env, policy, ep, writer):
+    """
+    Evaluate the policy for one epoch.
+
+    Args:
+        args (argparse.Namespace): Command line arguments.
+        test_env: Test environment.
+        policy: Policy network.
+        ep: Current epoch.
+        writer: TensorBoard summary writer.
+
+    Returns:
+        tuple: Total reward, number of unvisited nodes and number of used agents.
+    """
     policy.eval()
 
     total_reward = []
@@ -273,7 +320,13 @@ def test_epoch(args, test_env, policy, ep, writer):
 def train(args, writer):
 
 
-    """ ENV SETUP """
+    """
+    ENV SETUP
+
+    Args:
+        args (argparse.Namespace): Command line arguments.
+        writer: TensorBoard summary writer.
+    """
     #for CVRP
     if args.vrp_env == 'cvrp':
         feature_list = yaml.safe_load("""
@@ -443,6 +496,12 @@ def train(args, writer):
 
 
 def parse_args():
+    """
+    Parse the command line arguments.
+
+    Returns:
+        argparse.Namespace: Parsed arguments.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--vrp_env", type=str, default="cvrp", help="select the vrp environment to train on")
     parser.add_argument("--num_agents", type=int, default=10, help="number of agents")
@@ -454,6 +513,12 @@ def parse_args():
 
 
 def get_args():
+    """
+    Parse the command line arguments and complete them with derived settings.
+
+    Returns:
+        argparse.Namespace: Arguments.
+    """
     args = parse_args()
     args.model_name = 'am_model'
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -481,6 +546,12 @@ def get_args():
 
 
 def main(args):
+    """
+    Training entry point.
+
+    Args:
+        args (argparse.Namespace): Command line arguments.
+    """
     print("Training with args", args)
 
     if args.seed != None:

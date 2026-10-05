@@ -1,3 +1,4 @@
+"""Reward functions for the TOP environment."""
 import torch
 from tensordict import TensorDict
 from maenvs4vrp.core.env_agent_reward import RewardFn
@@ -10,17 +11,29 @@ class DenseReward(RewardFn):
     """
 
     def __init__(self):
-        """Constructor
-
+        """
+        Initialize the reward function.
         """
         self.env = None
 
     def set_env(self, env):
+        """
+        Set environment.
+
+        Args:
+            env (AECEnv): Environment.
+        """
         self.env = env
 
     def get_reward(self, action):
         """
+        Get reward and penalty.
 
+        Args:
+            action (torch.Tensor): [B, A] tensor with all agents' moves.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: Reward and penalty, with shape [B, 1] each.
         """
         reward = self.env.td_state['profits'].gather(1, action).clone()
         penalty = torch.zeros_like(action, dtype = torch.float, device=self.env.device)
@@ -34,17 +47,29 @@ class SparseReward(RewardFn):
     """
 
     def __init__(self):
-        """Constructor
-
+        """
+        Initialize the reward function.
         """
         self.env = None
 
     def set_env(self, env):
+        """
+        Set environment.
+
+        Args:
+            env (AECEnv): Environment.
+        """
         self.env = env
 
     def get_reward(self, action):
         """
+        Get reward and penalty.
 
+        Args:
+            action (torch.Tensor): Tensor with agent moves.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: Reward and penalty, with shape [B, 1] each.
         """
 
         reward = torch.zeros_like(action, dtype = torch.float, device=self.env.device)

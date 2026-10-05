@@ -1,3 +1,4 @@
+"""TOPTW parallel environment."""
 import torch
 from tensordict import TensorDict
 
@@ -26,15 +27,15 @@ class Environment(PEnv):
                 device: Optional[str] = None,
                 batch_size: torch.Size = None):
         """
-        Constructor.
+        Initialize the environment.
 
         Args:
-            instance_generator_object(InstanceBuilder): Generator instance.
-            obs_builder_object(ObservationBuilder): Observations instance.
-            reward_evaluator(RewardFn): Reward evaluator instance.
-            seed(int): Random number generator seed. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to None.
-            batch_size(torch.Size): Batch size. Defaults to None.
+            instance_generator_object (InstanceBuilder): Generator instance.
+            obs_builder_object (ObservationBuilder): Observations instance.
+            reward_evaluator (RewardFn): Reward evaluator instance.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to None.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
         """
 
         self.version = 'v0'
@@ -73,10 +74,11 @@ class Environment(PEnv):
         Retrieve agent environment observations.
 
         Args:
-            is_reset(bool): If the environment is on reset. Defauts to False.
+            td (TensorDict): Environment tensor instance.
+            obs_list (List[str], optional): List of observations to include. Defaults to None.
 
-        Returns
-            td_observations(TensorDict): Current agent observaions and masks dictionary.
+        Returns:
+            TensorDict: Environment tensor instance with the observations.
         """
 
         td_observations = self.obs_builder.get_observations(obs_list=obs_list)
@@ -104,10 +106,10 @@ class Environment(PEnv):
         Inactive agents (empty mask) are forced to return to the depot.
 
         Args:
-            td(TensorDict): Environment tensor instance.
+            td (TensorDict): Environment tensor instance.
 
         Returns:
-            td(TensorDict): Updated tensor with ``"next_actions"`` of shape [B, A].
+            TensorDict: Updated tensor with ``"next_actions"`` of shape [B, A].
         """
         batch_size = self.td_state.batch_size
         depot_idx = self.td_state['depot_idx']       # [B, 1]
@@ -162,21 +164,21 @@ class Environment(PEnv):
         Reset the environment.
 
         Args:
-            num_agents(int, optional): Total number of agents. Defaults to None.
-            num_nodes(int, optional): Total number of nodes. Defaults to None.
-            service_times(float, optional): Service time in the nodes. Defaults to None.
-            speed(float): Vehicles' speed. Defaults to None.
-            profits(str, optional): Profit type. Defaults to 'constant'.
-            instance_name(str, optional): Instance name. Defaults to None.
-            sample_type(str): Sample type. Defaults to "random".
-            instance_dict(Dict, optional): Instance dictionary. Defaults to None.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to None.
-            seed(int, optional): Random number generator seed. Defaults to None.
-            device(str, optional): Device. Defaults to "cpu".
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            service_times (float, optional): Service time in the nodes. Defaults to None.
+            speed (float, optional): Vehicles' speed. Defaults to None.
+            profits (str, optional): Profit type. Defaults to "constant".
+            instance_name (str, optional): Instance name. Defaults to None.
+            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            instance_dict (Dict, optional): Instance data to use instead of sampling a new instance. Defaults to None.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
-            TensorDict: Environment information dictionary.
+            TensorDict: Environment tensor instance.
         """
         if seed is not None:
             self._set_seed(seed)
@@ -295,24 +297,25 @@ class Environment(PEnv):
                       device: Optional[str] = "cpu",
                       obs_list: Optional[List[str]] = ['agents_action_mask']) -> TensorDict:
         """
-        Resets and observes the environment.
+        Resets and observe the environment.
 
         Args:
-            num_agents(int, optional): Total number of agents. Defaults to None.
-            num_nodes(int, optional): Total number of nodes. Defaults to None.
-            service_times(float, optional): Service time in the nodes. Defaults to None.
-            speed(float, optional): Vehicles' speed. Defaults to None.
-            profits(str, optional): Profit type. Defaults to 'constant'.
-            instance_name(str, optional): Instance name. Defaults to None.
-            sample_type(str): Sample type. Defaults to "random".
-            instance_dict(Dict, optional): Instance dictionary. Defaults to None.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to None.
-            seed(int, optional): Random number generator seed. Defaults to None.
-            obs_list(List[str], optional): Observations to retrieve. Defaults to ['agents_action_mask'].
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            service_times (float, optional): Service time in the nodes. Defaults to None.
+            speed (float, optional): Vehicles' speed. Defaults to None.
+            profits (str, optional): Profit strategy. Defaults to "constant".
+            instance_name (str, optional): Instance name. Defaults to None.
+            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            instance_dict (Dict, optional): Instance data to use instead of sampling a new instance. Defaults to None.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            obs_list (List[str], optional): List of observations to include. Defaults to ['agents_action_mask'].
 
         Returns:
-            TensorDict: Environment information dictionary.
+            TensorDict: Environment tensor instance.
         """
         td = self.reset(
             num_agents=num_agents,
@@ -335,12 +338,6 @@ class Environment(PEnv):
     def _update_all_agents_feasibility(self):
         """
         Update actions feasibility for all agents simultaneously.
-
-        Args:
-            n/a.
-
-        Returns:
-            None.
         """
         # [B, num_agents, num_nodes]
         _mask = self.td_state['nodes']['active_nodes_mask'].unsqueeze(1).expand(-1, self.num_agents, -1).clone()
@@ -417,10 +414,7 @@ class Environment(PEnv):
         Update done state for all agents simultaneously.
 
         Args:
-            actions(torch.Tensor): [B, A] tensor with all agents' moves.
-
-        Returns:
-            None.
+            actions (torch.Tensor): [B, A] tensor with all agents' moves.
         """
         self._update_done_all(actions)
 
@@ -429,10 +423,7 @@ class Environment(PEnv):
         Update done state for all agents simultaneously.
 
         Args:
-            actions(torch.Tensor): [B, A] tensor with all agents' moves.
-
-        Returns:
-            None.
+            actions (torch.Tensor): [B, A] tensor with all agents' moves.
         """
         former_done = self.td_state['done'].clone()
 
@@ -457,10 +448,7 @@ class Environment(PEnv):
         Update environment state for all agents simultaneously.
 
         Args:
-            actions(torch.Tensor): [B, A] tensor with all agents' moves.
-
-        Returns:
-            None.
+            actions (torch.Tensor): [B, A] tensor with all agents' moves.
         """
         self._update_state_all(actions)
 
@@ -472,10 +460,7 @@ class Environment(PEnv):
         it waits until tw_low before starting service.
 
         Args:
-            actions(torch.Tensor): [B, A] tensor with all agents' moves.
-
-        Returns:
-            None.
+            actions (torch.Tensor): [B, A] tensor with all agents' moves.
         """
         batch_size = self.td_state.batch_size
 
@@ -557,10 +542,7 @@ class Environment(PEnv):
         Update solution with all agents' actions for one simultaneous step.
 
         Args:
-            actions(torch.Tensor): [B, A] tensor with all agents' moves.
-
-        Returns:
-            None.
+            actions (torch.Tensor): [B, A] tensor with all agents' moves.
         """
         batch_size = self.td_state.batch_size
         agent_indices = (
@@ -585,12 +567,13 @@ class Environment(PEnv):
         Perform a simultaneous environment step for ALL agents.
 
         td["next_actions"] must be a [B, A] tensor with one action per agent.
+        All agents act in parallel in a single call.
 
         Args:
-            td(TensorDict): Environment tensor instance.
+            td (TensorDict): Environment tensor instance.
 
         Returns:
-            td(TensorDict): Updated environment tensor instance.
+            TensorDict: Updated environment tensor instance.
         """
         actions = td["next_actions"]   # [B, A]
         active_agents = self.td_state['agents']['active_agents_mask']  # [B, A]
@@ -629,12 +612,11 @@ class Environment(PEnv):
         Perform a simultaneous environment step for ALL agents, then observe.
 
         Args:
-            td(TensorDict): Environment tensor instance.
-            obs_list(Optional[List[str]]): Observation keys to include.
-                Defaults to ``['agents_action_mask']``.
+            td (TensorDict): Environment tensor instance.
+            obs_list (List[str], optional): List of observations to include. Defaults to ['agents_action_mask'].
 
         Returns:
-            td(TensorDict): Updated environment tensor instance with observations.
+            TensorDict: Updated environment tensor instance with observations.
         """
         td = self.step_all(td)
         td = self.observe(td, obs_list=obs_list)
@@ -646,12 +628,11 @@ class Environment(PEnv):
         Perform a simultaneous environment step for ALL agents, then observe.
 
         Args:
-            td(TensorDict): Environment tensor instance.
-            obs_list(Optional[List[str]]): Observation keys to include.
-                Defaults to ['agents_action_mask'].
+            td (TensorDict): Environment tensor instance.
+            obs_list (List[str], optional): List of observations to include. Defaults to ['agents_action_mask'].
 
         Returns:
-            td(TensorDict): Updated environment tensor instance.
+            TensorDict: Updated environment tensor instance.
         """
         return self.step_all_observe(td, obs_list=obs_list)
 
@@ -659,17 +640,14 @@ class Environment(PEnv):
 
     def check_solution_validity(self):
         """
-        Check if solution is valid according to constraints.
+        Check if solution is valid according to TOPTW constraints.
 
-        Args:
-            N/a.
-
-        Returns:
-            None.
+        Raises:
+            AssertionError: If the solution violates a problem constraint.
         """
 
         distance2depot = get_distance(self.td_state['coords'], self.td_state['coords'][..., 0:1, :])
-        time2depot = distance2depot / self.td_state['speed'].squeeze(-1)
+        time2depot = distance2depot / self.td_state['speed']
         if self.n_digits is not None:
             distance2depot = torch.floor(self.n_digits * distance2depot) / self.n_digits
             time2depot = torch.floor(self.n_digits * time2depot) / self.n_digits

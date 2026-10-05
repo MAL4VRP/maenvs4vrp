@@ -4,9 +4,7 @@
 Benchmark Instance Generation 
 ===============================
 
-TODO: CHANGE HERE!
-
-Solomon and Homberger instances are included to be used with CVRPTW environment.
+GMTDVRP benchmark instances are the RouteFinder test and validation sets with 50 and 100 nodes (``instance_type`` ``"50_test"``, ``"100_test"``, ``"50_validation"`` or ``"100_validation"``). They are downloaded from the Hugging Face dataset ``ai4co/routefinder`` the first time ``BenchmarkInstanceGenerator`` is instantiated.
 
 Benchmark instance generation settings are defined in file ``benchmark_instances_generator.py``.
 

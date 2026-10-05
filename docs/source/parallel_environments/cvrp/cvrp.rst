@@ -4,7 +4,7 @@
 CVRP
 ==========
 
-Parallel environment for the Capacitated Vehicle Routing Problem (CVRP).
+Parallel environment for the Capacitated Vehicle Routing Problem (CVRP), see [Dan59]_.
 
 .. toctree::
     :maxdepth: 1

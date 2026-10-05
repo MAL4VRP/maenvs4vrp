@@ -1,3 +1,4 @@
+"""Base class for reward functions."""
 
 class RewardFn:
     """Agent rewards base class.
@@ -5,13 +6,7 @@ class RewardFn:
 
     def __init__(self):
         """
-        Constructor.
-
-        Args:
-            n/a.
-
-        Returns:
-            None.
+        Initialize the reward function.
         """
         self.env = None
 
@@ -20,22 +15,13 @@ class RewardFn:
         Set Environment.
 
         Args:
-            env(AECEnv): Environment.
-
-        Returns:
-            None.
+            env (AECEnv): Environment.
         """
         self.env = env
 
     def get_reward(self):
         """
         Get Reward.
-
-        Args:
-            n/a.
-
-        Returns:
-            None.
         """
 
         raise NotImplementedError()

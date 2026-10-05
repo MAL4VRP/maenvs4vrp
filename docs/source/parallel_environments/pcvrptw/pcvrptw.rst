@@ -4,7 +4,7 @@
 PCVRPTW
 ==========
 
-Parallel environment for the Prize-Collecting Capacitated Vehicle Routing Problem with Time Windows (PCVRPTW).
+Parallel environment for the Prize-Collecting Capacitated Vehicle Routing Problem with Time Windows (PCVRPTW), see [Bal89]_.
 
 .. toctree::
     :maxdepth: 1

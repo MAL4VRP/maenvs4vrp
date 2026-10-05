@@ -4,7 +4,7 @@
 MTVRP
 ==========
 
-These multi-task environments are based on the Routefinder implementation (see GitHub paper and the corresponding paper for more details). 
+These multi-task environments are based on the `RouteFinder <https://github.com/ai4co/routefinder>`_ implementation (see [Ber24]_ for more details). 
 We've adapted the original code to ensure compatibility with our library and to support multi-agent scenarios.
 
 Supported variants:
@@ -80,10 +80,3 @@ Here's everything about MTVRP environment:
     environment/environment
     generation/generation
     observations/observations
-
-
-**References**
-
-https://github.com/ai4co/routefinder
-
-https://arxiv.org/abs/2406.15007

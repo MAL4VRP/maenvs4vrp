@@ -25,9 +25,9 @@ ObservationBuilder
 
 .. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.set_env
 
-.. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.get_static_feat_dim
+.. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.get_nodes_static_feat_dim
 
-.. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.get_dynamic_feat_dim
+.. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.get_nodes_dynamic_feat_dim
 
 .. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.get_nodes_feat_dim
 
@@ -35,15 +35,21 @@ ObservationBuilder
 
 .. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.get_other_agents_feat_dim
 
+.. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.get_all_agents_feat_dim
+
 .. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.get_global_feat_dim
 
 .. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.compute_static_features
+
+.. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.compute_edges_static_features
 
 .. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.compute_dynamic_features
 
 .. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.compute_agent_features
 
-.. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.compute_agents_features
+.. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.compute_other_agents_features
+
+.. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.compute_all_agents_features
 
 .. autofunction:: maenvs4vrp.core.env_observation_builder.ObservationBuilder.compute_global_features
 

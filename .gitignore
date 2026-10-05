@@ -1,6 +1,33 @@
+# Python bytecode / caches
 __pycache__/
+**/__pycache__/
 *.py[cod]
+*$py.class
+
+# Test / tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
 
 # Jupyter Notebook
 .ipynb_checkpoints/
 */.ipynb_checkpoints/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+docs/build/
+
+# Benchmark/generated datasets downloaded on demand from Hugging Face
+maenvs4vrp/environments/*/data/
+maenvs4vrp/parallel_environments/*/data/
+
+# Copied from maenvs4vrp/learning_notebooks at docs build time (see docs/source/conf.py)
+docs/source/notebooks/

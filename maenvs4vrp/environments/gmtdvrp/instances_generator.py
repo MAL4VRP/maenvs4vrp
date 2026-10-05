@@ -24,10 +24,10 @@ def get_vehicle_capacity(num_loc: int) -> int:
     Get vehicle capacity.
 
     Args:
-        num_loc(int): Number of nodes.
+        num_loc (int): Number of nodes.
 
     Returns:
-        capacity(int): Vehicle capacity.
+        int: Vehicle capacity.
     """
     if num_loc > 1000:
         extra_cap = 1000 // 5 + (num_loc - 1000) // 33.3
@@ -91,10 +91,10 @@ class InstanceGenerator(InstanceBuilder):
         Get list of generated instances.
 
         Args:
-            mixed(bool): If True, it gets all instances. If False, it gets only unmixed instances. Defaults to True.
+            mixed (bool, optional): If True, it gets all instances. If False, it gets only unmixed instances. Defaults to True.
 
         Returns:
-            benchmark_instances(list): Generated instances.
+            list: Generated instances.
         """
 
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -152,14 +152,11 @@ class InstanceGenerator(InstanceBuilder):
         Constructor. Instance generator.
 
         Args:
-            instance_type(str): Instance type. Can be "validation" or "test". Defaults to "validation".
-            set_of_instances(set):  Set of instances file names. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
-            batch_size(torch.Size, optional): Batch size. If not specified, defaults to 1.
-            seed(int): Random number generator seed. Defaults to None.
-
-        Returns:
-            None.
+            instance_type (str, optional): Instance type. Can be "validation" or "test". Defaults to "validation".
+            set_of_instances (set, optional): Set of instances file names. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
         """
 
         if seed is None:
@@ -191,10 +188,7 @@ class InstanceGenerator(InstanceBuilder):
         Load every instance on set_of_instances set.
 
         Args:
-            set_of_instances(set): Set of instances file names. Defaults to None.
-
-        Returns:
-            None.
+            set_of_instances (set, optional): Set of instances file names. Defaults to None.
         """
 
         if set_of_instances:
@@ -210,7 +204,7 @@ class InstanceGenerator(InstanceBuilder):
         Read instance data from file.
 
         Args:
-            instance_name(str): Instance file name.
+            instance_name (str): instance file name.
 
         Returns:
             Dict: Instance data.
@@ -232,8 +226,8 @@ class InstanceGenerator(InstanceBuilder):
         Get an instance with custom number of agents.
 
         Args:
-            instance_name(str): Instance file name.
-            num_agents(int): Number of agents. Defaults to None.
+            instance_name (str): Instance file name.
+            num_agents (int, optional): Total number of agents. Defaults to None.
 
         Returns:
             Dict: Instance data.
@@ -261,15 +255,15 @@ class InstanceGenerator(InstanceBuilder):
         Subsample variant. If variant_preset is specified, it loads that variant. Otherwise it samples variant's parameters across batches based on probabilities.
 
         Args:
-            prob_open_routes(float): Probability of open routes. Defaults to 0.5.
-            prob_time_windows(float): Probability of time windows. Defaults to 0.5.
-            prob_limit(float): Probability of distance limits. Defaults to 0.5.
-            prob_backhaul(float): Probability of backhaul. Defaults to 0.5.
-            td(TensorDict): Environment instance tensor. Defaults to None.
-            variant_preset(TensorDict): Variant preset. Defaults to None.
+            prob_open_routes (float, optional): Probability of open routes. Defaults to 0.5.
+            prob_time_windows (float, optional): Probability of time windows. Defaults to 0.5.
+            prob_limit (float, optional): Probability of distance limits. Defaults to 0.5.
+            prob_backhaul (float, optional): Probability of backhaul. Defaults to 0.5.
+            td (TensorDict, optional): Environment tensor instance. Defaults to None.
+            variant_preset (TensorDict, optional): Variant preset to be sampled. Defaults to None.
 
         Returns:
-            td(TensorDict): Environment instance tensor.
+            torch.Tensor: Environment instance tensor.
         """
 
         td['has_open_routes'] = torch.zeros((*self.batch_size, 1), dtype=torch.bool)
@@ -392,31 +386,30 @@ class InstanceGenerator(InstanceBuilder):
         Generate random instance.
 
         Args:
-            num_depots(int): Total number of depots. Defaults to None.
-            num_agents(int): Total number of agents. Defaults to None.
-            num_nodes(int): Total number of nodes. Defaults to None.
-            min_coords(float): Minimum number of coords. Defaults to None.
-            max_coords(float): Maximum number of coords. Defaults to None.
-            capacity(int): Vehicles' capacity. Defaults to None.
-            service_time(float): Service time. Defaults to None.
-            min_demands(int): Minimum number of demands. Defaults to None.
-            max_demands(int): Maximum number of demands. Defaults to None.
-            min_backhaul(int): Minimum number of backhauls. Defaults to None.
-            max_backhaul(int): Maximum number of backhauls. Defaults to None.
-            max_time(float): Maximum route time. Defaults to None.
-            backhaul_ratio(float): Ratio of backhaul demands. Defaults to None.
-            backhaul_class(int): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to None.
-            sample_backhaul_class(bool): If backhaul class is sampled across batches. Defaults to None.
-            max_distance_limit(float): Route distance limits. Defaults to None.
-            speed(float): Vehicles' speed. Defaults to None.
-            initial_load(float): Vehicles' initial load. Defaults to None.
-            subsample(bool): If problem variants are to be sampled. Defaults to True.
-            variant_preset(str): Variant preset to be sampled. Defaults to None.
-            use_combinations(bool): It considers combinations for which sampling mask the instance is defined. Defaults to False.
-            force_visit(bool): It forces the agent to visit all feasible nodes before going back to depot. Defaults to True.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            seed(int): Random number generator seed. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
+            num_depots (int, optional): Total number of depots. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            min_coords (float, optional): Minimum number of coords. Defaults to 0.0.
+            max_coords (float, optional): Maximum number of coords. Defaults to 1.0.
+            capacity (float, optional): Capacity of each agent. Defaults to None.
+            service_time (float, optional): Service time. Defaults to 0.2.
+            min_demands (int, optional): Minimum number of demands. Defaults to 1.
+            max_demands (int, optional): Maximum number of demands. Defaults to 10.
+            min_backhaul (int, optional): Minimum number of backhauls. Defaults to 1.
+            max_backhaul (int, optional): Maximum number of backhauls. Defaults to 10.
+            max_time (float, optional): Maximum route time. Defaults to None.
+            backhaul_ratio (float, optional): Ratio of backhaul demands. Defaults to None.
+            backhaul_class (int, optional): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to None.
+            sample_backhaul_class (bool, optional): If backhaul class is sampled across batches. Defaults to None.
+            max_distance_limit (float, optional): Route distance limits. Defaults to None.
+            speed (float, optional): Vehicles' speed. Defaults to None.
+            initial_load (float, optional): Vehicles' initial load. Defaults to None.
+            subsample (bool, optional): If problem variants are to be sampled. Defaults to True.
+            variant_preset (str, optional): Variant preset to be sampled. Defaults to None.
+            use_combinations (bool, optional): It considers combinations for which sampling mask the instance is defined. Defaults to False.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
             TensorDict: Instance data.
@@ -553,32 +546,31 @@ class InstanceGenerator(InstanceBuilder):
         Generate augmented instance.
 
         Args:
-            num_depots(int): Total number of depots. Defaults to None.
-            num_agents(int): Total number of agents. Defaults to None.
-            num_nodes(int): Total number of nodes. Defaults to None.
-            min_coords(float): Minimum number of coords. Defaults to None.
-            max_coords(float): Maximum number of coords. Defaults to None.
-            capacity(int): Vehicles' capacity. Defaults to None.
-            service_time(float): Service time. Defaults to None.
-            min_demands(int): Minimum number of demands. Defaults to None.
-            max_demands(int): Maximum number of demands. Defaults to None.
-            min_backhaul(int): Minimum number of backhauls. Defaults to None.
-            max_backhaul(int): Maximum number of backhauls. Defaults to None.
-            max_time(float): Maximum route time. Defaults to None.
-            backhaul_ratio(float): Ratio of backhaul demands. Defaults to None.
-            backhaul_class(int): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to None.
-            sample_backhaul_class(bool): If backhaul class is sampled across batches. Defaults to None.
-            max_distance_limit(float): Route distance limits. Defaults to None.
-            speed(float): Vehicles' speed. Defaults to None.
-            initial_load(float): Vehicles' initial load. Defaults to None.
-            subsample(bool): If problem variants are to be sampled. Defaults to True.
-            variant_preset(str): Variant preset to be sampled. Defaults to None.
-            use_combinations(bool): It considers combinations for which sampling mask the instance is defined. Defaults to False.
-            force_visit(bool): It forces the agent to visit all feasible nodes before going back to depot. Defaults to True.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int): Number of augmentations. Defaults to 2.
-            seed(int): Random number generator seed. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
+            num_depots (int, optional): Total number of depots. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            min_coords (float, optional): Minimum number of coords. Defaults to None.
+            max_coords (float, optional): Maximum number of coords. Defaults to None.
+            capacity (float, optional): Capacity of each agent. Defaults to None.
+            service_time (float, optional): Service time. Defaults to None.
+            min_demands (int, optional): Minimum number of demands. Defaults to None.
+            max_demands (int, optional): Maximum number of demands. Defaults to None.
+            min_backhaul (int, optional): Minimum number of backhauls. Defaults to None.
+            max_backhaul (int, optional): Maximum number of backhauls. Defaults to None.
+            max_time (float, optional): Maximum route time. Defaults to None.
+            backhaul_ratio (float, optional): Ratio of backhaul demands. Defaults to None.
+            backhaul_class (int, optional): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to None.
+            sample_backhaul_class (bool, optional): If backhaul class is sampled across batches. Defaults to None.
+            max_distance_limit (float, optional): Route distance limits. Defaults to None.
+            speed (float, optional): Vehicles' speed. Defaults to None.
+            initial_load (float, optional): Vehicles' initial load. Defaults to None.
+            subsample (bool, optional): If problem variants are to be sampled. Defaults to True.
+            variant_preset (str, optional): Variant preset to be sampled. Defaults to None.
+            use_combinations (bool, optional): It considers combinations for which sampling mask the instance is defined. Defaults to False.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to 2.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
             TensorDict: Instance data.
@@ -662,7 +654,7 @@ class InstanceGenerator(InstanceBuilder):
         Sample one instance from instance set.
 
         Args:
-            seed(int): Random number generator seed. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
 
         Returns:
             str: Instance name.
@@ -708,36 +700,39 @@ class InstanceGenerator(InstanceBuilder):
         Sample one instance from instance space.
 
         Args:
-            num_depots(int): Total number of depots. Defaults to 3.
-            num_agents(int): Total number of agents. Defaults to 2.
-            num_nodes(int): Total number of nodes. Defaults to 15.
-            min_coords(float): Minimum number of coords. Defaults to 0.0.
-            max_coords(float): Maximum number of coords. Defaults to 1.0.
-            capacity(int): Vehicles' capacity. Defaults to None.
-            service_time(float): Service time. Defaults to 0.2.
-            min_demands(int): Minimum number of demands. Defaults to 1.
-            max_demands(int): Maximum number of demands. Defaults to 10.
-            min_backhaul(int): Minimum number of backhauls. Defaults to 1.
-            max_backhaul(int): Maximum number of backhauls. Defaults to 10.
-            max_time(float): Maximum route time. Defaults to 4.6.
-            backhaul_ratio(float): Ratio of backhaul demands. Defaults to 0.2.
-            backhaul_class(int): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to 1.
-            sample_backhaul_class(bool): If backhaul class is sampled across batches. Defaults to False.
-            max_distance_limit(float): Route distance limits. Defaults to 2.8.
-            speed(float): Vehicles' speed. Defaults to 1.0.
-            initial_load(float): Vehicles' initial load. Defaults to None.
-            subsample(bool): If problem variants are to be sampled. Defaults to True.
-            variant_preset(str): Variant preset to be sampled. Defaults to "all".
-            use_combinations(bool): It considers combinations for which sampling mask the instance is defined. Defaults to False.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int): Number of augmentations. Defaults to 2.
-            sample_type(str): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
-            instance_name(str): Instance file path. Defaults to None.
-            seed(int): Random number generator seed. Defaults to None.
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
+            num_depots (int, optional): Total number of depots. Defaults to 3.
+            num_agents (int, optional): Total number of agents. Defaults to 2.
+            num_nodes (int, optional): Total number of nodes. Defaults to 15.
+            min_coords (float, optional): Minimum number of coords. Defaults to 0.0.
+            max_coords (float, optional): Maximum number of coords. Defaults to 1.0.
+            capacity (float, optional): Capacity of each agent. Defaults to None.
+            service_time (float, optional): Service time. Defaults to 0.2.
+            min_demands (int, optional): Minimum number of demands. Defaults to 1.
+            max_demands (int, optional): Maximum number of demands. Defaults to 10.
+            min_backhaul (int, optional): Minimum number of backhauls. Defaults to 1.
+            max_backhaul (int, optional): Maximum number of backhauls. Defaults to 10.
+            max_time (float, optional): Maximum route time. Defaults to 4.6.
+            backhaul_ratio (float, optional): Ratio of backhaul demands. Defaults to 0.2.
+            backhaul_class (int, optional): Class of backhaul problem. If 1, it's unmixed, if 2, it's mixed. Defaults to 1.
+            sample_backhaul_class (bool, optional): If backhaul class is sampled across batches. Defaults to False.
+            max_distance_limit (float, optional): Route distance limits. Defaults to 2.8.
+            speed (float, optional): Vehicles' speed. Defaults to 1.0.
+            initial_load (float, optional): Vehicles' initial load. Defaults to None.
+            subsample (bool, optional): If problem variants are to be sampled. Defaults to True.
+            variant_preset (str, optional): Variant preset to be sampled. Defaults to "all".
+            use_combinations (bool, optional): It considers combinations for which sampling mask the instance is defined. Defaults to False.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to 2.
+            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            instance_name (str, optional): Instance name. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
-            TensorDict: Instance data.
+            Dict: Instance data.
+
+        Raises:
+            ValueError: If ``sample_type`` is not "random", "augment" or "saved".
         """
 
         if seed is not None:
@@ -926,6 +921,9 @@ class InstanceGenerator(InstanceBuilder):
         elif sample_type=='saved':
             instance_info = self.get_instance(instance_name, num_agents=num_agents)
 
+        else:
+            raise ValueError(f"Unknown sample_type '{sample_type}'. Expected 'random', 'augment' or 'saved'.")
+
         return instance_info
 
 
@@ -960,8 +958,8 @@ class InstanceGenerator(InstanceBuilder):
         Generate demands.
 
         Args:
-            batch_size(int): Batch size.
-            num_nodes(int): Number of nodes.
+            batch_size (int): Batch size.
+            num_nodes (int): Total number of nodes.
 
         Returns:
             torch.Tensor: Linehaul and backhaul demands.
@@ -987,8 +985,8 @@ class InstanceGenerator(InstanceBuilder):
         Generate backhaul class.
 
         Args:
-            shape(Tuple): Tensor shape.
-            sample(bool): Sample backhaul class. Defaults to False.
+            shape (Tuple[int, int]): Tensor shape.
+            sample (bool, optional): Sample backhaul class. Defaults to False.
 
         Returns:
             torch.Tensor: Linehaul and backhaul demands.
@@ -1005,8 +1003,8 @@ class InstanceGenerator(InstanceBuilder):
         Generate distance limits.
 
         Args:
-            shape(Tuple): Tensor shape.
-            coords(torch.Tensor): Nodes coordinates.
+            shape (Tuple[int, int]): Tensor shape.
+            coords (torch.Tensor): Nodes coordinates.
 
         Returns:
             torch.Tensor: Distance limits.
@@ -1026,12 +1024,12 @@ class InstanceGenerator(InstanceBuilder):
     def get_distance(self, x: Tensor, y: Tensor):
 
         """
-        Euclidean distance between two tensors of shape `[..., n, dim].
+        Euclidean distance between two tensors of shape ``[..., n, dim]``.
         Taken from: https://github.com/ai4co/rl4co/blob/main/rl4co/utils/ops.py
 
         Args:
-            x(torch.Tensor): Point x.
-            y(torch.Tensor): Point y.
+            x (Tensor): Point x.
+            y (Tensor): Point y.
 
         Returns:
             torch.Tensor: Distance between x and y.
@@ -1048,8 +1046,8 @@ class InstanceGenerator(InstanceBuilder):
         Generate time windows.
 
         Args:
-            coords(torch.Tensor): Nodes coordinates.
-            speed(torch.Tensor): Agents speed.
+            coords (torch.Tensor, optional): Nodes coordinates. Defaults to None.
+            speed (torch.Tensor, optional): Vehicles' speed. Defaults to None.
 
         Returns:
             torch.Tensor: Time windows and service times.

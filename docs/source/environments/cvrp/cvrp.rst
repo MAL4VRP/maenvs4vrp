@@ -6,7 +6,7 @@ CVRP
 
 Capacitated Vehicle Routing Problem (CVRP)
 
-In the CVRP, a fleet of vehicles is dispatched from a depot to serve a set of customers with known demands. Each customer can only be served once by a single vehicle, and each vehicle cannot exceed its capacity at any point. Vehicles must start and end their routes at the depot.
+In the CVRP, a fleet of vehicles is dispatched from a depot to serve a set of customers with known demands. Each customer can only be served once by a single vehicle, and each vehicle cannot exceed its capacity at any point. Vehicles must start and end their routes at the depot (see [Dan59]_).
 
 The objective is to minimize the total combined traveled distance (or time) of all vehicle routes.
 

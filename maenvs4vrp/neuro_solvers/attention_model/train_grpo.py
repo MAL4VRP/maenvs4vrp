@@ -54,11 +54,25 @@ from attention_model.policy_net_am import PolicyNet
 
 def save_model_state_dict(save_path, model_policy):
     # save the policy state dict
+    """
+    Save the policy state dict to disk.
+
+    Args:
+        save_path: File path where the state dict is saved.
+        model_policy: Policy model to save.
+    """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     state_dict = model_policy.to("cpu").state_dict()
     torch.save(state_dict, save_path)
 
 def set_random_seed(seed, torch_deterministic):
+    """
+    Seed the random number generators.
+
+    Args:
+        seed (int): Random number generator seed.
+        torch_deterministic: If True, make cuDNN deterministic.
+    """
     random.seed(seed)
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = torch_deterministic
@@ -66,7 +80,13 @@ def set_random_seed(seed, torch_deterministic):
 
 def train(args, writer):
 
-    """ ENV SETUP """
+    """
+    ENV SETUP
+
+    Args:
+        args (argparse.Namespace): Command line arguments.
+        writer: TensorBoard summary writer.
+    """
 
     if args.vrp_env == 'cvrp':
         feature_list = yaml.safe_load("""
@@ -469,6 +489,19 @@ def train(args, writer):
     writer.close()
 
 def evaluate(args, writer, eval_env, policy, ep):
+    """
+    Evaluate the policy on the evaluation environment and log the results.
+
+    Args:
+        args (argparse.Namespace): Command line arguments.
+        writer: TensorBoard summary writer.
+        eval_env: Evaluation environment.
+        policy: Policy network.
+        ep: Current epoch.
+
+    Returns:
+        tuple: Total reward, number of unvisited nodes and number of used agents.
+    """
     policy.eval()
 
     total_reward = []
@@ -541,6 +574,12 @@ def evaluate(args, writer, eval_env, policy, ep):
 
 
 def parse_args():
+    """
+    Parse the command line arguments.
+
+    Returns:
+        argparse.Namespace: Parsed arguments.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--vrp_env", type=str, default="cvrp", help="select the vrp environment to train on")
     parser.add_argument("--num_agents", type=int, default=3, help="number of agents")
@@ -552,6 +591,12 @@ def parse_args():
 
 
 def get_args():
+    """
+    Parse the command line arguments and complete them with derived settings.
+
+    Returns:
+        argparse.Namespace: Arguments.
+    """
     args = parse_args()
     args.model_name     = 'am_grpo_model'
     args.device         = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -595,6 +640,12 @@ def get_args():
 
 
 def main(args):
+    """
+    Training entry point.
+
+    Args:
+        args (argparse.Namespace): Command line arguments.
+    """
     print("Training with args", args)
 
     if args.seed is not None:

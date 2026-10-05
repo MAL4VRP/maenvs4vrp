@@ -1,3 +1,4 @@
+"""Random instance generator for the PCVRPTW parallel environment."""
 import torch
 from tensordict import TensorDict
 
@@ -27,11 +28,8 @@ class InstanceGenerator(InstanceBuilder):
         """
         Get list of generated files.
 
-        Args:
-            n/a.
-
         Returns:
-            None.
+            dict: Mapping from instance set name to the list of available instance files.
         """
         base_dir = path.dirname(path.dirname(path.abspath(__file__)))
 
@@ -71,20 +69,17 @@ class InstanceGenerator(InstanceBuilder):
         Constructor. Instance generator.
 
         Args:
-            num_agents(Optional[int]): Total number of agents. Defaults to 20.
-            num_nodes(Optional[int]):  Total number of nodes. Defaults to 100.
-            capacity(Optional[int]): Total capacity for each agent. Defaults to 50.
-            service_times(Optional[float]): Service time in the nodes. Defaults to 0.2.
-            speed(Optional[float]): Vehicles' speed. Defaults to 1.0.
-            profits(Optional[str]): Type of profits to use. It can be 'constant', 'uniform' or 'distance'. Defaults to 'distance'.
-            instance_name(Optional[str]): Instance name. Defaults to "validation".
-            list_of_instances(Optional[set]):  List of instances file names. Defaults to None.
-            device(Optional[str]): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
-            batch_size(Optional[torch.Size]): Batch size. If not specified, defaults to 1.
-            seed(Optional[int]): Random number generator seed. Defaults to None.
-
-        Returns:
-            None.
+            num_agents (int, optional): Total number of agents. Defaults to 20.
+            num_nodes (int, optional): Total number of nodes. Defaults to 100.
+            capacity (int, optional): Capacity of each agent. Defaults to 50.
+            service_times (float, optional): Service time in the nodes. Defaults to 0.2.
+            speed (float, optional): Vehicles' speed. Defaults to 1.0.
+            profits (str, optional): Type of profits to use. It can be 'constant', 'uniform' or 'distance'. Defaults to "distance".
+            instance_name (str, optional): Instance name. Can be "validation" or "test". Defaults to "validation".
+            list_of_instances (list, optional): List of instances file names. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
         """
 
         # seed the generation process
@@ -120,7 +115,6 @@ class InstanceGenerator(InstanceBuilder):
         self.num_agents = 20
         self.num_nodes = 100
 
-        assert instance_name in ["validation", "test"], f"instance unknown name"
         self.list_of_instances = list_of_instances
         if list_of_instances:
             self.instance_name = instance_name
@@ -132,7 +126,7 @@ class InstanceGenerator(InstanceBuilder):
         Read instance data from file.
 
         Args:
-            instance_name(str): instance file name.
+            instance_name (str): instance file name.
 
         Returns:
             Dict: Instance data.
@@ -155,8 +149,8 @@ class InstanceGenerator(InstanceBuilder):
         Get an instance with custom number of agents.
 
         Args:
-            instance_name(str): Instance file name.
-            num_agents(Optional[int]): Number of agents. Defaults to None.
+            instance_name (str): Instance file name.
+            num_agents (int, optional): Total number of agents. Defaults to None.
 
         Returns:
             Dict: Instance data.
@@ -174,10 +168,7 @@ class InstanceGenerator(InstanceBuilder):
         Load every instance on list_of_instances list.
 
         Args:
-            list_of_instances(list): List of instances file names. Defaults to None.
-
-        Returns:
-            None.
+            list_of_instances (list, optional): List of instances file names. Defaults to None.
         """
         if list_of_instances:
             self.list_of_instances = list_of_instances
@@ -195,12 +186,12 @@ class InstanceGenerator(InstanceBuilder):
         Get time windows to reach the nodes.
 
         Args:
-            instance(TensorDict): Data instance. Defaults to None.
-            batch_size(torch.Size): Batch size. Defaults to None.
-            seed(Optional[int]): Random number generator seed. Defaults to None.
+            instance (TensorDict, optional): Data instance. Defaults to None.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
 
         Returns:
-            torch.Tensor: Nodes time windows.
+            torch.tensor: Nodes time windows.
         """
 
         if seed is not None:
@@ -234,13 +225,9 @@ class InstanceGenerator(InstanceBuilder):
         Generate random instance.
 
         Args:
-            num_agents(int): Total number of agents. Defaults to 20.
-            num_nodes(int):  Total number of nodes. Defaults to 100.
-            capacity(int): Total capacity for each agent. Defaults to 50.
-            service_times(int): Total time of service. Defaults to 0.2.
-            speed(float): Vehicles' speed. Defaults to None.
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            seed(int, optional): Random number generator seed. Defaults to None.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
             TensorDict: Instance data.
@@ -308,12 +295,13 @@ class InstanceGenerator(InstanceBuilder):
                                  seed:Optional[int]=None,
                                  device:Optional[str]="cpu")-> TensorDict:
         """
-        Generate augmentated instance.
+        Generate augmented instance.
 
         Args:
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int): Data augmentation. Defaults to 2.
-            seed(int, optional): Random number generator seed. Defaults to None.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to 2.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
             TensorDict: Instance data.
@@ -357,7 +345,7 @@ class InstanceGenerator(InstanceBuilder):
         Sample one instance from instance list.
 
         Args:
-            seed(int, optional): Random number generator seed. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
 
         Returns:
             str: Instance name.
@@ -385,20 +373,24 @@ class InstanceGenerator(InstanceBuilder):
         Sample one instance from instance space.
 
         Args:
-            num_agents(int): Total number of agents. Defaults to None.
-            num_nodes(int):  Total number of nodes. Defaults to None.
-            capacity(int): Total capacity for each agent. Defaults to 50.
-            service_times(int): Service time in the nodes. Defaults to 0.2.
-            speed(float): Vehicles' speed. Defaults to 1.0.
-            profits(str): Type of profits to use. It can be 'constant', 'uniform' or 'distance'. Defaults to 'constant'.
-            instance_name(str):  Instance name. Defaults to None.
-            sample_type(str): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
-            batch_size(torch.Size, optional): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to None.
-            seed(int): Random number generator seed. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            capacity (int, optional): Capacity of each agent. Defaults to 50.
+            service_times (float, optional): Service time in the nodes. Defaults to 0.2.
+            speed (float, optional): Vehicles' speed. Defaults to 1.0.
+            profits (str, optional): Type of profits to use. It can be 'constant', 'uniform' or 'distance'. Defaults to "constant".
+            instance_name (str, optional): Instance name. Defaults to None.
+            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
             Dict: Instance data.
+
+        Raises:
+            ValueError: If ``sample_type`` is not "random", "augment" or "saved".
         """
         if seed is not None:
             self._set_seed(seed)
@@ -443,6 +435,9 @@ class InstanceGenerator(InstanceBuilder):
                                                      device=device)
         elif sample_type=='saved':
             instance_info = self.get_instance(instance_name, num_agents=num_agents)
+
+        else:
+            raise ValueError(f"Unknown sample_type '{sample_type}'. Expected 'random', 'augment' or 'saved'.")
 
         return instance_info
 

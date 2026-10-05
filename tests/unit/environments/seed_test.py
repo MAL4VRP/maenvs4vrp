@@ -1,29 +1,29 @@
+"""Seeding of the random instance generators."""
 import pytest
-import importlib
+
 from maenvs4vrp.utils.utils import data_equivalence
+from tests.helpers import AEC_ENVS, PARALLEL_ENVS, module, nodes_for
 
-ENVIRONMENT_LIST = ['dvrptw', 'dsvrptw', 'cvrptw', 'toptw', 'cvrpstw', 'sdvrptw', 
-                    'pcvrptw', 'pdptw', 'mdvrptw', 'mtvrp', 'gmtvrp', 'mtdvrp', 'gmtdvrp',
-                    'cvrp', 'hcvrp', 'top']
-
-
-@pytest.fixture(params=ENVIRONMENT_LIST)
-def instances_generator_fixture(request):
-    generator_module_name = f'maenvs4vrp.environments.{request.param}.instances_generator'
-    generator = importlib.import_module(generator_module_name).InstanceGenerator()
-    return generator
+GENERATORS = [("environments", e) for e in AEC_ENVS] + [("parallel_environments", e) for e in PARALLEL_ENVS]
 
 
-def test_different_seed_instances_generator(instances_generator_fixture):
-    instance1 = instances_generator_fixture.sample_instance(num_agents=50, num_nodes=101, seed=1)
-    instance2 = instances_generator_fixture.sample_instance(num_agents=50, num_nodes=101, seed=5)
+@pytest.fixture(params=GENERATORS, ids=[f"{g[:3]}-{e}" for g, e in GENERATORS])
+def generator(request):
+    group, env_name = request.param
+    return env_name, module(env_name, "instances_generator", group).InstanceGenerator()
+
+
+def test_different_seed_gives_different_instances(generator):
+    env_name, gen = generator
+    n = nodes_for(env_name, 101)
+    instance1 = gen.sample_instance(num_agents=10, num_nodes=n, seed=1)
+    instance2 = gen.sample_instance(num_agents=10, num_nodes=n, seed=5)
     assert not data_equivalence(instance1, instance2)
 
 
-def test_same_seed_instances_generator(instances_generator_fixture):
-    instance1 = instances_generator_fixture.sample_instance(num_agents=50, num_nodes=101, seed=1)
-    instance2 = instances_generator_fixture.sample_instance(num_agents=50, num_nodes=101, seed=1)
+def test_same_seed_gives_same_instance(generator):
+    env_name, gen = generator
+    n = nodes_for(env_name, 101)
+    instance1 = gen.sample_instance(num_agents=10, num_nodes=n, seed=1)
+    instance2 = gen.sample_instance(num_agents=10, num_nodes=n, seed=1)
     assert data_equivalence(instance1, instance2)
-
-
-

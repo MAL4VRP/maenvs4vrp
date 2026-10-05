@@ -1,3 +1,4 @@
+"""Base class for instance generators."""
 
 from typing import Dict, Optional
 import random
@@ -23,16 +24,16 @@ class InstanceBuilder(object):
                  device: str = "cpu",
                  batch_size: torch.Size = None) -> None:
         """
-        Constructor
+        Initialize the InstanceBuilder.
 
         Args:
-            instance_name(str): Instance name. Defaults to None.
-            list_of_instances(set):  List of instances file names. Defaults to None.
-            num_nodes(int):  Total number of nodes. Defaults to None.
-            num_agents(int):  Total number of agents. Defaults to None.
-            seed(int): Random number generator seed. Defaults to None.
-            device (str): Type of processing. Defaults to "cpu".
-            batch_size(torch.Size or None): Batch size. If not specified, defaults to 1.
+            instance_name (str, optional): Instance name. Defaults to None.
+            list_of_instances (set, optional): List of instances file names. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
         """
 
         self.num_nodes = None
@@ -56,10 +57,7 @@ class InstanceBuilder(object):
         Set the random seed used by the environment.
 
         Args:
-            seed(int, optional): Seed used.
-
-        Returns:
-            None.
+            seed (int): Random number generator seed.
         """
         self.seed = seed
         # 1. Python built-in random module
@@ -76,10 +74,7 @@ class InstanceBuilder(object):
         Read instance data from file.
 
         Args:
-            instance_name(str): instance file name.
-
-        Returns:
-            Dict: Instance data.
+            instance_name (str): instance file name.
         """
         raise NotImplementedError()
 
@@ -89,11 +84,8 @@ class InstanceBuilder(object):
         Combine read instance file and parse to Dict.
 
         Args:
-            instance_name(str): Instance file name.
-            num_agents(int): Number of agents. Defaults to None.
-
-        Returns:
-            Dict: Instance data.
+            instance_name (str): Instance file name.
+            num_agents (int, optional): Total number of agents. Defaults to None.
         """
         raise NotImplementedError()
 
@@ -103,21 +95,14 @@ class InstanceBuilder(object):
         Load every instance on set_of_instances set.
 
         Args:
-            set_of_instances(Optional[set], optional): Set of instances file names. Defaults to None.
-            already_loaded(Optional[bool], optional): If instance data has been pre-loaded. Defaults to None.
-
+            set_of_instances (set, optional): Set of instances file names. Defaults to None.
+            already_loaded (bool, optional): If instance data has been pre-loaded. Defaults to None.
         """
         raise NotImplementedError()
 
     def get_instance_preloaded(self) -> Dict:
         """
         Get preloaded instance.
-
-        Args:
-            n/a.
-
-        Returns:
-            Dict: Instance data.
         """
         raise NotImplementedError()
 
@@ -130,12 +115,9 @@ class InstanceBuilder(object):
         Sample one instance from instance space.
 
         Args:
-            num_nodes(int):  Total number of nodes. Defaults to None.
-            num_agents(int):  Total number of agents. Defaults to None.
-            seed(int): Random number generator seed. Defaults to None.
-
-        Returns:
-            Dict: Instance data.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
         """
         raise NotImplementedError()
 
@@ -144,10 +126,7 @@ class InstanceBuilder(object):
         Sample one instance from instance list.
 
         Args:
-            seed(int, optional): Random number generator seed. Defaults to None.
-
-        Returns:
-            str: instance name.
+            seed (int, optional): Random number generator seed. Defaults to None.
         """
         raise NotImplementedError()
 
@@ -160,13 +139,10 @@ class InstanceBuilder(object):
         Sample one instance from instance space.
 
         Args:
-            num_nodes(int, optional): Total number of nodes. Defaults to None.
-            num_agents(int, optional): Total number of agents. Defaults to None.
-            instance_name(str, optional): Instance name. Defaults to None.
-            random_sample(bool, optional): True to sample instance and False to use original instance data. Defaults to None.
-            seed(int, optional): Random number generator seed. Defaults to None.
-
-        Returns:
-            Dict: Instance data.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            instance_name (str, optional): Instance name. Defaults to None.
+            random_sample (bool, optional): True to sample instance and False to use original instance data. Defaults to True.
+            seed (int, optional): Random number generator seed. Defaults to None.
         """
         raise NotImplementedError()

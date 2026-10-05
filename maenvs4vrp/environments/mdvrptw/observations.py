@@ -1,3 +1,4 @@
+"""Observation builder for the MDVRPTW environment."""
 import torch
 from tensordict import TensorDict
 
@@ -33,6 +34,12 @@ class Observations(ObservationBuilder):
 
 
     def __init__(self, feature_list:Dict = None):
+        """
+        Initialize the observation builder.
+
+        Args:
+            feature_list (Dict, optional): Dictionary containing observation features list to be available to the agent. Defaults to None.
+        """
         super().__init__()
         """
         Constructor.
@@ -70,10 +77,7 @@ class Observations(ObservationBuilder):
         Set environment.
 
         Args:
-            env(AECEnv): Environment.
-
-        Returns:
-            None.
+            env (AECEnv): Environment.
         """
 
         super().set_env(env)
@@ -82,9 +86,6 @@ class Observations(ObservationBuilder):
     def get_nodes_static_feat_dim(self):
         """
         Nodes static features dimensions.
-
-        Args:
-            n/a.
 
         Returns:
             int: Nodes static features dimensions.
@@ -96,9 +97,6 @@ class Observations(ObservationBuilder):
         """
         Nodes dynamic features dimensions.
 
-        Args:
-            n/a.
-
         Returns:
             int: Nodes dynamic features dimensions.
         """
@@ -107,9 +105,6 @@ class Observations(ObservationBuilder):
     def get_nodes_feat_dim(self):
         """
         Nodes features dimensions.
-
-        Args:
-            n/a.
 
         Returns:
             int: Nodes features dimensions.
@@ -120,9 +115,6 @@ class Observations(ObservationBuilder):
         """
         Agent features dimensions.
 
-        Args:
-            n/a.
-
         Returns:
             int: Agent features dimensions.
         """
@@ -132,9 +124,6 @@ class Observations(ObservationBuilder):
         """
         Other agent features dimensions.
 
-        Args:
-            n/a.
-
         Returns:
             int: Other agent features dimensions.
         """
@@ -143,9 +132,6 @@ class Observations(ObservationBuilder):
     def get_global_feat_dim(self):
         """
         Global features dimensions.
-
-        Args:
-            n/a.
 
         Returns:
             int: Global features dimensions.
@@ -158,9 +144,6 @@ class Observations(ObservationBuilder):
         """
         Instance nodes X coordinates.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Instance nodes X coordinates.
         """
@@ -170,9 +153,6 @@ class Observations(ObservationBuilder):
         """
         Instance nodes Y coordinates.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Instance nodes Y coordinates.
         """
@@ -181,9 +161,6 @@ class Observations(ObservationBuilder):
     def get_feat_x_coordinate_min_max(self):
         """
         Min-max normalized X coordinates of instance nodes.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Min. and max. x coordinates of instance nodes.
@@ -196,9 +173,6 @@ class Observations(ObservationBuilder):
         """
         Min-max normalized Y coordinates of instance nodes.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Min-max normalized Y coordinates of instance nodes.
         """
@@ -210,9 +184,6 @@ class Observations(ObservationBuilder):
         """
         Nodes time windows starting times.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Nodes time windows starting times.
         """
@@ -221,9 +192,6 @@ class Observations(ObservationBuilder):
     def get_feat_tw_high(self):
         """
         Nodes time windows ending times.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Nodes time windows ending times.
@@ -234,9 +202,6 @@ class Observations(ObservationBuilder):
         """
         Nodes demand.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Nodes demand.
         """
@@ -246,9 +211,6 @@ class Observations(ObservationBuilder):
         """
         Nodes service time.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Nodes service time.
         """
@@ -257,9 +219,6 @@ class Observations(ObservationBuilder):
     def get_feat_tw_high_minus_tw_low_div_max_dur(self):
         """
         Nodes time window amplitude divided by max tour duration.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Nodes time window amplitude divided by max tour duration.
@@ -272,9 +231,6 @@ class Observations(ObservationBuilder):
         """
         Checks if node is depot.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: If the node is depot or not.
         """
@@ -286,9 +242,6 @@ class Observations(ObservationBuilder):
         """
         Nodes time to open divided by end time.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Nodes time to open divided by end time.
         """
@@ -299,9 +252,6 @@ class Observations(ObservationBuilder):
         """
         Nodes time to close divided by end time.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Nodes time to close divided by end time.
         """
@@ -311,9 +261,6 @@ class Observations(ObservationBuilder):
     def get_feat_arrive2node_div_end_time(self):
         """
         Agent arriving time to nodes divided by end time.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Agent arriving time to nodes divided by end time.
@@ -328,9 +275,6 @@ class Observations(ObservationBuilder):
         """
         Nodes time to open, after agent step, divided by end time.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Nodes time to open, after agent step, divided by end time.
         """
@@ -343,9 +287,6 @@ class Observations(ObservationBuilder):
         """
         Nodes time to close, after agent step, divided by end time.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Nodes time to close, after agent step, divided by end time.
         """
@@ -356,9 +297,6 @@ class Observations(ObservationBuilder):
     def get_feat_time2end_after_step_div_end_time(self):
         """
         Time end, after agent step to node, divided by end time.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Time end, after agent step to node, divided by end time.
@@ -371,9 +309,6 @@ class Observations(ObservationBuilder):
         """
         Fraction of time left, after agent step to node.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Fraction of time left, after agent step to node.
         """
@@ -384,9 +319,6 @@ class Observations(ObservationBuilder):
     def get_feat_reachable_frac_agents(self):
         """
         Feasible nodes per agent.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Feasible nodes per agent.
@@ -400,9 +332,6 @@ class Observations(ObservationBuilder):
         """
         Current agent X coordinate.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Current agent X coordinate.
         """
@@ -414,9 +343,6 @@ class Observations(ObservationBuilder):
         """
         Current agent Y coordinate.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Current agent Y coordinate.
         """
@@ -427,9 +353,6 @@ class Observations(ObservationBuilder):
     def get_feat_agent_x_coordinate_min_max(self):
         """
         Current agent min-max normalized X location.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Current agent min-max normalized X location.
@@ -443,9 +366,6 @@ class Observations(ObservationBuilder):
         """
         Current agent min-max normalized Y location.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Current agent min-max normalized Y location.
         """
@@ -458,9 +378,6 @@ class Observations(ObservationBuilder):
         """
         Agent fraction of time elapsed.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Agent fraction of time elapsed.
         """
@@ -471,9 +388,6 @@ class Observations(ObservationBuilder):
         """
         Agent fraction of used capacity.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Agent fraction of used capacity.
         """
@@ -483,9 +397,6 @@ class Observations(ObservationBuilder):
     def get_feat_agent_arrivedepot_div_end_time(self):
         """
         Agent time to depot divided by end time.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Agent time to depot divided by end time.
@@ -502,9 +413,6 @@ class Observations(ObservationBuilder):
         """
         Fraction of current agent feasible nodes, in order to the total number of instance nodes.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Fraction of current agent feasible nodes, in order to the total number of instance nodes.
         """
@@ -518,9 +426,6 @@ class Observations(ObservationBuilder):
         """
         Fraction of current agent distance to depot compared to its end time.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Fraction of current agent distance to depot compared to its end time.
         """
@@ -533,9 +438,6 @@ class Observations(ObservationBuilder):
         """
         Agents X coordinates.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Agents X coordinates.
         """
@@ -547,9 +449,6 @@ class Observations(ObservationBuilder):
         """
         Agents Y coordinates.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Agents Y coordinates.
         """
@@ -560,9 +459,6 @@ class Observations(ObservationBuilder):
     def get_feat_other_agents_x_coordinate_min_max(self):
         """
         Agents min-max normalized X location.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Agents min-max normalized X location.
@@ -576,9 +472,6 @@ class Observations(ObservationBuilder):
         """
         Agents min-max normalized Y location.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Agents min-max normalized Y location.
         """
@@ -591,9 +484,6 @@ class Observations(ObservationBuilder):
         """
         Agents fraction of elapsed time.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Agents fraction of elapsed time.
         """
@@ -603,9 +493,6 @@ class Observations(ObservationBuilder):
     def get_feat_other_agents_frac_current_load(self):
         """
         Agents fraction of used capacity.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Agents fraction of used capacity.
@@ -618,9 +505,6 @@ class Observations(ObservationBuilder):
         """
         Fraction of agents feasible nodes, in order to the total number of instance nodes.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Fraction of agents feasible nodes, in order to the total number of instance nodes.
         """
@@ -630,9 +514,6 @@ class Observations(ObservationBuilder):
     def get_feat_other_agents_dist2agent_div_end_time(self):
         """
         Agents distance to active agent divided by end time.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Agents distance to active agent divided by end time.
@@ -646,9 +527,6 @@ class Observations(ObservationBuilder):
         """
         Difference between agents time and current agent time, divided by max. tour duration.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Difference between agents time and current agent time, divided by max. tour duration.
         """
@@ -658,9 +536,6 @@ class Observations(ObservationBuilder):
     def get_feat_other_agents_was_last(self):
         """
         Last agent performing an action.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Last agent performing an action.
@@ -674,9 +549,6 @@ class Observations(ObservationBuilder):
         """
         Agents X coordinates.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Agents X coordinates.
         """
@@ -687,9 +559,6 @@ class Observations(ObservationBuilder):
     def get_feat_all_agents_y_coordinate(self):
         """
         Agents Y coordinates.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Agents Y coordinates.
@@ -705,9 +574,6 @@ class Observations(ObservationBuilder):
         """
         Fraction of done agents.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Fraction of done agents.
         """
@@ -718,9 +584,6 @@ class Observations(ObservationBuilder):
         """
         Fraction of served demands.
 
-        Args:
-            n/a.
-
         Returns:
             torch.Tensor: Fraction of served demands.
         """
@@ -730,9 +593,6 @@ class Observations(ObservationBuilder):
     def get_feat_global_frac_fleet_load_capacity(self):
         """
         Fraction of fleet load capacity.
-
-        Args:
-            n/a.
 
         Returns:
             torch.Tensor: Fraction of fleet load capacity.
