@@ -846,6 +846,10 @@ class InstanceGenerator(InstanceBuilder):
             self.variant_preset = variant_preset.replace('m', '', 1)
             self.backhaul_class = 2
 
+        # random draws are made on the CPU, so that a seed gives the same instances on every device
+        if sample_type in ('random', 'augment'):
+            self.device = 'cpu'
+
         if sample_type == 'random':
             instance_info = self.random_generate_instance(
                 num_depots = self.num_depots,
@@ -907,6 +911,9 @@ class InstanceGenerator(InstanceBuilder):
         else:
             raise ValueError(f"Unknown sample_type '{sample_type}'. Expected 'random', 'augment' or 'saved'.")
 
+        self.device = device
+        if device is not None:
+            instance_info['data'] = instance_info['data'].to(device)
         return instance_info
 
 

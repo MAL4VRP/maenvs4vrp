@@ -42,6 +42,11 @@ refactor duplicated code into shared helpers. Instead, keep every folder structu
   that has the same code (grep for it) and to the matching `docs/source/<group>/<problem>/` pages.
 - Every generator (instance, toy, benchmark, GTI) must raise `ValueError` for an unknown `sample_type`
   (`tests/unit/test_generators.py`), and random generation must work offline.
+- The step is on the training hot path (see `docs/performance.md`): avoid operations that wait for the GPU
+  (boolean-mask indexing or assignment, `.item()`, `.any()`/`.all()` in Python conditions, `nonzero`);
+  use `torch.where`, `scatter_`/`gather` and logical operations instead. Refactors must keep
+  `tests/unit/test_golden_rollouts.py` passing; regenerate its reference
+  (`python tests/unit/test_golden_rollouts.py --update`) only for an intended change of behaviour.
 
 ## Environment & commands
 - Python >= 3.11. Development conda env: `maenvs4vrp`

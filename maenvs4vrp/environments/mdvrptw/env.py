@@ -42,7 +42,8 @@ class Environment(AECEnv):
                 reward_evaluator: RewardFn,
                 seed: Optional[int] = None,
                 device: Optional[str] = None,
-                batch_size: Optional[torch.Size] = None):
+                batch_size: Optional[torch.Size] = None,
+                check_actions: bool = True):
         """
         Initialize the environment.
 
@@ -54,7 +55,9 @@ class Environment(AECEnv):
             seed (int, optional): Random number generator seed. Defaults to None.
             device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to None.
             batch_size (torch.Size, optional): Batch size. Defaults to None.
+            check_actions (bool, optional): If True, check at every step that the selected agent and action are feasible (on GPU this waits for the device). Defaults to True.
         """
+        self.check_actions = check_actions
 
         self.version = 'v0'
         self.env_name = 'mpvrptw'
@@ -225,7 +228,7 @@ class Environment(AECEnv):
               batch_size: Optional[torch.Size] = None,
               n_augment: Optional[int] = None,
               seed:int|None=None,
-              device: Optional[str] = "cpu")-> TensorDict:
+              device: Optional[str] = None)-> TensorDict:
         """
         Reset the environment.
 
@@ -242,11 +245,16 @@ class Environment(AECEnv):
             batch_size (torch.Size, optional): Batch size. Defaults to None.
             n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
             seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda"; None keeps the environment device. Defaults to None.
 
         Returns:
             TensorDict: Environment tensor instance.
         """
+
+        if device is None:
+            device = self.device
+        else:
+            self.device = device
 
         if seed is not None:
             self._set_seed(seed)
@@ -283,7 +291,7 @@ class Environment(AECEnv):
         else:
             self.n_digits = None
 
-        self.td_state = instance_info['data']
+        self.td_state = instance_info['data'].to(self.device)
         self.td_state['speed'] = instance_info['data']['speed'].clone()
 
         self.td_state['done'] = torch.zeros(*batch_size, dtype=torch.bool)
@@ -359,7 +367,7 @@ class Environment(AECEnv):
               batch_size: Optional[torch.Size] = None,
               n_augment: Optional[int] = None,
               seed:int|None=None,
-              device: Optional[str] = "cpu")-> TensorDict:
+              device: Optional[str] = None)-> TensorDict:
         """
         Resets the environment and sets the current agent.
 
@@ -375,7 +383,7 @@ class Environment(AECEnv):
             batch_size (torch.Size, optional): Batch size. Defaults to None.
             n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
             seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda"; None keeps the environment device. Defaults to None.
 
         Returns:
             TensorDict: Environment tensor instance.
@@ -411,7 +419,7 @@ class Environment(AECEnv):
               batch_size: Optional[torch.Size] = None,
               n_augment: Optional[int] = None,
               seed:int|None=None,
-              device: Optional[str] = "cpu",
+              device: Optional[str] = None,
               obs_list: Optional[List[str]] = ['agents_action_mask']) -> TensorDict:
         """
         Resets and observe the environment.
@@ -428,7 +436,7 @@ class Environment(AECEnv):
             batch_size (torch.Size, optional): Batch size. Defaults to None.
             n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
             seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda"; None keeps the environment device. Defaults to None.
             obs_list (List[str], optional): List of observations to include. Defaults to ['agents_action_mask'].
 
         Returns:
@@ -464,7 +472,7 @@ class Environment(AECEnv):
               batch_size: Optional[torch.Size] = None,
               n_augment: Optional[int] = None,
               seed:int|None=None,
-              device: Optional[str] = "cpu",
+              device: Optional[str] = None,
               obs_list: Optional[List[str]] = ["agent_cur_node_idx",'nodes_static', 'action_mask', 'agent']) -> TensorDict:
         """
         Resets the environment, sets the current agent and makes observations.
@@ -481,7 +489,7 @@ class Environment(AECEnv):
             batch_size (torch.Size, optional): Batch size. Defaults to None.
             n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
             seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda"; None keeps the environment device. Defaults to None.
             obs_list (List[str], optional): List of observations to include. Defaults to ['agent_cur_node_idx', 'nodes_static', 'action_mask', 'agent'].
 
         Returns:
@@ -624,10 +632,9 @@ class Environment(AECEnv):
         mask = mask & ~done.unsqueeze(-1).unsqueeze(-1)
 
         # Open depot of agent 0 only in done rows (batch consistency)
-        done_rows = done.squeeze(-1).nonzero(as_tuple=True)[0]
-        if done_rows.numel() > 0:
-            agent0_depot = agent_depot_idx[done_rows, 0]                # [done_rows]
-            mask[done_rows, 0, agent0_depot] = True
+        depot_col = agent_depot_idx[:, :1]                            # [B, 1] depot of agent 0
+        agent0_mask = mask[:, 0]                                      # view [B, N]
+        agent0_mask.scatter_(1, depot_col, agent0_mask.gather(1, depot_col) | done.reshape(-1, 1))
 
         # force_visit: agent at its own depot must leave if unvisited customer nodes remain
         if self.force_visit:
@@ -660,7 +667,7 @@ class Environment(AECEnv):
                                                                     ~action.eq(self.td_state['cur_agent']['depot_idx']))
 
         self.td_state['done'] = (~self.td_state['agents']['active_agents_mask']).all(dim=-1)
-        self.td_state['done'][former_done] = True
+        self.td_state['done'] = self.td_state['done'] | former_done
         # update served nodes
         self.td_state['nodes']['active_nodes_mask'].scatter_(1, action, action.eq(self.td_state['cur_agent']['depot_idx']))
         self.td_state['is_last_step'] = self.td_state['done'].eq(~former_done)
@@ -720,8 +727,8 @@ class Environment(AECEnv):
         self.td_state['nodes']['cur_demands'].scatter_(1, action, torch.zeros_like(action, dtype = torch.float))
         self.td_state['agents']['cur_load'].scatter_(1, self.td_state['cur_agent_idx'], self.td_state['cur_agent']['cur_load'])
         # update visited nodes
-        r = torch.arange(*self.td_state.batch_size, device=self.device)
-        self.td_state['agents']['visited_nodes'][r, self.td_state['cur_agent_idx'].squeeze(-1), action.squeeze(-1)] = True
+        self.td_state['agents']['visited_nodes'].view(*self.td_state.batch_size, -1).scatter_(
+            1, self.td_state['cur_agent_idx'] * self.num_nodes + action, True)
 
         # update agent step
         self.td_state['cur_agent']['cur_step'] = torch.where(~agents_done, self.td_state['cur_agent']['cur_step']+1,
@@ -729,7 +736,7 @@ class Environment(AECEnv):
         self.td_state['agents']['cur_step'].scatter_(1, self.td_state['cur_agent_idx'], self.td_state['cur_agent']['cur_step'])
         self.td_state['cur_node_idx'] = action.clone()
         # if all done activate first agent to guarantee batch consistency during agent sampling
-        self.td_state['agents']['active_agents_mask'][self.td_state['agents']['active_agents_mask'].sum(1).eq(0), 0] = True
+        self.td_state['agents']['active_agents_mask'][:, 0] |= ~self.td_state['agents']['active_agents_mask'].any(1)
 
     def set_cur_agent(self, cur_agent_idx, td: TensorDict):
         """
@@ -767,14 +774,14 @@ class Environment(AECEnv):
 
         self.td_state['cur_agent_idx'] =  cur_agent_idx
         self.td_state['cur_agent'] = TensorDict({
-                                'action_mask': self.td_state['agents']['action_mask'].gather(1, self.td_state['cur_agent_idx'][:,:,None].expand(-1, -1, self.num_nodes)).squeeze(1).clone(),
-                                'depot_idx': self.td_state['agents']['depot_idx'].gather(1, self.td_state['cur_agent_idx']).clone(),
-                                'cur_load': self.td_state['agents']['cur_load'].gather(1, self.td_state['cur_agent_idx']).clone(),
-                                'cur_time': self.td_state['agents']['cur_time'].gather(1, self.td_state['cur_agent_idx']).clone(),
-                                'cur_node_idx': self.td_state['agents']['cur_node_idx'].gather(1, self.td_state['cur_agent_idx']).clone(),
-                                'cur_travel_time': self.td_state['agents']['cur_travel_time'].gather(1, self.td_state['cur_agent_idx']).clone(),
-                                'cum_travel_time': self.td_state['agents']['cum_travel_time'].gather(1, self.td_state['cur_agent_idx']).clone(),
-                                'cur_step': self.td_state['agents']['cur_step'].gather(1, self.td_state['cur_agent_idx']).clone(),
+                                'action_mask': self.td_state['agents']['action_mask'].gather(1, self.td_state['cur_agent_idx'][:,:,None].expand(-1, -1, self.num_nodes)).squeeze(1),
+                                'depot_idx': self.td_state['agents']['depot_idx'].gather(1, self.td_state['cur_agent_idx']),
+                                'cur_load': self.td_state['agents']['cur_load'].gather(1, self.td_state['cur_agent_idx']),
+                                'cur_time': self.td_state['agents']['cur_time'].gather(1, self.td_state['cur_agent_idx']),
+                                'cur_node_idx': self.td_state['agents']['cur_node_idx'].gather(1, self.td_state['cur_agent_idx']),
+                                'cur_travel_time': self.td_state['agents']['cur_travel_time'].gather(1, self.td_state['cur_agent_idx']),
+                                'cum_travel_time': self.td_state['agents']['cum_travel_time'].gather(1, self.td_state['cur_agent_idx']),
+                                'cur_step': self.td_state['agents']['cur_step'].gather(1, self.td_state['cur_agent_idx']),
                                 }, batch_size=self.td_state.batch_size, device=self.device)
 
     def _update_solution(self, action):
@@ -808,13 +815,15 @@ class Environment(AECEnv):
 
         if 'next_agent' in td.keys():
             agent_idx = td['next_agent']
-            assert self.td_state['agents']['active_agents_mask'].gather(1, agent_idx).all(), f"not feasible agent"
+            if self.check_actions:
+                assert self.td_state['agents']['active_agents_mask'].gather(1, agent_idx).all(), f"not feasible agent"
             self._update_cur_agent(agent_idx)
             agent_step = self.td_state['cur_agent']['cur_step']
             td["agent_step"] = agent_step
 
         action = td["next_action"]
-        assert self.td_state['cur_agent']['action_mask'].gather(1, action).all(), f"not feasible action"
+        if self.check_actions:
+            assert self.td_state['cur_agent']['action_mask'].gather(1, action).all(), f"not feasible action"
 
         self._update_done(action)
         done = self.td_state['done'].clone()

@@ -160,7 +160,8 @@ def train(args, writer):
                     reward_evaluator=reward_evaluator,
                     device=args.env_device,
                     batch_size = args.batch_size,
-                    seed=args.seed)
+                    seed=args.seed,
+                    check_actions=False)  # actions come from the masked policy
 
     if args.val_set == 'None':
         eval_generator = importlib.import_module(generator_module_name).InstanceGenerator(device=args.env_device)
@@ -274,7 +275,7 @@ def train(args, writer):
 
                     td['next_action'] = action.unsqueeze(1).to(args.env_device)
                     td = env.step_agent_select_observe(
-                        td, obs_list=['agent_cur_node_idx', 'nodes_static', 'action_mask', 'agent'])
+                        td, obs_list=['agent_cur_node_idx', 'action_mask', 'agent'])
 
                     if rb_node_dyn_obs is not None:
                         rb_node_dyn_obs[step_idx] = node_dyn_obs
@@ -553,7 +554,7 @@ def evaluate(args, writer, eval_env, policy, ep):
 
                 # execute the environment and log data
                 td['next_action'] = action.unsqueeze(1).to(args.env_device)
-                td = eval_env.step_agent_select_observe(td, obs_list=['agent_cur_node_idx', 'nodes_static', 'action_mask', 'agent'])
+                td = eval_env.step_agent_select_observe(td, obs_list=['agent_cur_node_idx', 'action_mask', 'agent'])
 
                 f_reward.append(td['reward'] + td['penalty'])
 

@@ -54,7 +54,7 @@ class DenseReward(RewardFn):
             dist_depot2nodes = torch.floor(self.env.n_digits * dist_depot2nodes) / self.env.n_digits
             time_depot2nodes = torch.floor(self.env.n_digits * time_depot2nodes) / self.env.n_digits
 
-        penalty[is_last_step] = self.pending_penalty * ((time_depot2nodes * self.env.td_state['nodes']['active_nodes_mask']).sum(-1, keepdim = True).float()[is_last_step])
+        penalty = torch.where(is_last_step.unsqueeze(-1), self.pending_penalty * ((time_depot2nodes * self.env.td_state['nodes']['active_nodes_mask']).sum(-1, keepdim = True).float()), penalty)
 
         return reward, penalty
 
@@ -106,8 +106,7 @@ class DenseRewardV(RewardFn):
             dist_depot2nodes = torch.floor(self.env.n_digits * dist_depot2nodes) / self.env.n_digits
             time_depot2nodes = torch.floor(self.env.n_digits * time_depot2nodes) / self.env.n_digits
 
-        penalty[is_last_step] = self.pending_penalty * ((self.env.td_state['nodes']['active_nodes_mask']).sum(-1, keepdim = True).float()[is_last_step]) \
-                                - self.env.td_state['agents']['cur_step'].gt(0).sum(-1).float().unsqueeze(-1)[is_last_step]
+        penalty = torch.where(is_last_step.unsqueeze(-1), self.pending_penalty * ((self.env.td_state['nodes']['active_nodes_mask']).sum(-1, keepdim = True).float()) - self.env.td_state['agents']['cur_step'].gt(0).sum(-1).float().unsqueeze(-1), penalty)
 
         return reward, penalty
 
@@ -160,7 +159,7 @@ class SparseReward(RewardFn):
             time_depot2nodes = torch.floor(self.env.n_digits * time_depot2nodes) / self.env.n_digits
 
         final_reward = -self.env.td_state['agents']['cum_travel_time'].sum(1, keepdim = True)
-        penalty[is_last_step] = self.pending_penalty * ((time_depot2nodes * self.env.td_state['nodes']['active_nodes_mask']).sum(-1, keepdim = True).float()[is_last_step])
+        penalty = torch.where(is_last_step.unsqueeze(-1), self.pending_penalty * ((time_depot2nodes * self.env.td_state['nodes']['active_nodes_mask']).sum(-1, keepdim = True).float()), penalty)
 
-        reward[is_last_step] = final_reward[is_last_step]
+        reward = torch.where(is_last_step.unsqueeze(-1), final_reward, reward)
         return reward, penalty

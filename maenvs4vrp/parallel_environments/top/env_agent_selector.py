@@ -102,9 +102,8 @@ class AgentSelector(BaseSelector):
         Returns:
             torch.Tensor: Next agent.
         """
-        avail = torch.arange(self.env.num_agents, dtype = torch.float).unsqueeze(0).repeat(*self.env.batch_size, 1).to(self.env.device)
-        avail[~self.env.td_state['agents']['active_agents_mask']] = float('inf')
-        selected_agent = avail.argmin(1, keepdim = True)
+        # first active agent (argmax returns the first maximal index)
+        selected_agent = self.env.td_state['agents']['active_agents_mask'].to(torch.uint8).argmax(1, keepdim = True)
         return selected_agent
 
 
@@ -137,7 +136,7 @@ class SmallestTimeAgentSelector(BaseSelector):
         Returns:
             torch.Tensor: Next agent.
         """
-        avail = self.env.td_state['agents']['cur_time'].clone()
-        avail[~self.env.td_state['agents']['active_agents_mask']] = float('inf')
+        avail = torch.where(self.env.td_state['agents']['active_agents_mask'],
+                            self.env.td_state['agents']['cur_time'], float('inf'))
         selected_agent = avail.argmin(1, keepdim = True)
         return selected_agent

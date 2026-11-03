@@ -36,8 +36,29 @@ reproducing published experiments.
   environments without time, `available_load` of the multi-task environments).
   Configurations that name them now fail with an `AssertionError` when the
   observations are set up, instead of failing during a rollout.
+- **`reset(device=None)` keeps the environment device.** The `reset*` methods used to
+  default to `device="cpu"`, so an environment built with `device="cuda"` generated its
+  instances on the CPU or crashed (cvrp, parallel cvrp). Passing a device to `reset`
+  now also moves the environment to it.
+- **top and toptw:** `td_state['agents']['visited_nodes']` only marks the nodes each
+  agent visited. Indexing with an unsqueezed agent index marked them for the agents of
+  every batch row. Nothing read this field, so episodes are unchanged.
+
+### Performance
+- New constructor argument `check_actions` (default `True`). The per-step feasibility
+  asserts on the selected agent and action wait for the GPU; set it to `False` when the
+  actions come from a masked policy. The training scripts do.
+- The step no longer synchronizes with the GPU: boolean-mask assignments are replaced
+  by `torch.where`, `scatter_` and logical operations (`done`, active agents, rewards,
+  agent selectors, depot of agent 0 in done rows, `visited_nodes`), and redundant
+  `clone()` calls after `gather` are removed. Results are bitwise identical
+  (`tests/unit/test_golden_rollouts.py`). See `docs/performance.md`.
+- The training scripts no longer recompute the static node observations at every step.
 
 ### Fixed
+- The multi-task environments (mtvrp, mtdvrp, gmtvrp, gmtdvrp) run on CUDA. Their
+  random generators draw on the CPU and move the instance to the requested device,
+  so a seed gives the same instances on every device.
 - Speed/capacity broadcasting in the all-agents feasibility of cvrpstw, dvrptw,
   mdvrptw, pcvrptw, pdptw and parallel top, and in the toptw validators.
 - Crash of gmtdvrp for `batch_size > 1`; debug prints in the multi-task validators.

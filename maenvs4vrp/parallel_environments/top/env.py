@@ -35,7 +35,8 @@ class Environment(PEnv):
                 reward_evaluator: RewardFn,
                 seed=None,
                 device: Optional[str] = None,
-                batch_size: Optional[torch.Size] = None):
+                batch_size: Optional[torch.Size] = None,
+                check_actions: bool = True):
         """
         Initialize the environment.
 
@@ -46,7 +47,9 @@ class Environment(PEnv):
             seed (int, optional): Random number generator seed. Defaults to None.
             device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to None.
             batch_size (torch.Size, optional): Batch size. Defaults to None.
+            check_actions (bool, optional): If True, check at every step that the selected agent and action are feasible (on GPU this waits for the device). Defaults to True.
         """
+        self.check_actions = check_actions
 
         self.version = 'v0'
         self.env_name = 'top'
@@ -167,7 +170,7 @@ class Environment(PEnv):
               force_visit: bool = False,
               batch_size: Optional[torch.Size] = None,
               n_augment: Optional[int] = None,
-              device: Optional[str] = "cpu",
+              device: Optional[str] = None,
               seed: int | None = None) -> TensorDict:
         """
         Reset the environment.
@@ -183,12 +186,17 @@ class Environment(PEnv):
             force_visit (bool, optional): If True, agents must visit all feasible nodes before returning to the depot. Defaults to False.
             batch_size (torch.Size, optional): Batch size. Defaults to None.
             n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda"; None keeps the environment device. Defaults to None.
             seed (int, optional): Random number generator seed. Defaults to None.
 
         Returns:
             TensorDict: Environment tensor instance.
         """
+        if device is None:
+            device = self.device
+        else:
+            self.device = device
+
         if seed is not None:
             self._set_seed(seed)
 
@@ -226,7 +234,7 @@ class Environment(PEnv):
         else:
             self.n_digits = None
 
-        self.td_state = instance_info['data']
+        self.td_state = instance_info['data'].to(self.device)
         self.td_state['speed'] = instance_info['data']['speed'].clone()
 
         self.td_state['done'] = torch.zeros(*batch_size, dtype=torch.bool)
@@ -306,7 +314,7 @@ class Environment(PEnv):
                       batch_size: Optional[torch.Size] = None,
                       n_augment: Optional[int] = None,
                       seed: int | None = None,
-                      device: Optional[str] = "cpu",
+                      device: Optional[str] = None,
                       obs_list: Optional[List[str]] = ['agents_action_mask']) -> TensorDict:
         """
         Resets and observe the environment.
@@ -323,7 +331,7 @@ class Environment(PEnv):
             batch_size (torch.Size, optional): Batch size. Defaults to None.
             n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
             seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda"; None keeps the environment device. Defaults to None.
             obs_list (List[str], optional): List of observations to include. Defaults to ['agents_action_mask'].
 
         Returns:
@@ -410,10 +418,10 @@ class Environment(PEnv):
         mask = mask & ~done.unsqueeze(-1).unsqueeze(-1)
 
         # Open depot for agent 0 only in done rows (batch consistency)
-        done_rows = done.squeeze(-1).nonzero(as_tuple=True)[0]
-        if done_rows.numel() > 0:
-            depot_idx = self.td_state['depot_idx'].squeeze(-1) if self.td_state['depot_idx'].dim() > 1 else self.td_state['depot_idx']
-            mask[done_rows, 0, depot_idx[done_rows]] = True
+        depot_idx = self.td_state['depot_idx'].squeeze(-1) if self.td_state['depot_idx'].dim() > 1 else self.td_state['depot_idx']
+        depot_col = depot_idx.reshape(-1, 1)                          # [B, 1]
+        agent0_mask = mask[:, 0]                                      # view [B, N]
+        agent0_mask.scatter_(1, depot_col, agent0_mask.gather(1, depot_col) | done.reshape(-1, 1))
 
         return mask
 
@@ -444,7 +452,7 @@ class Environment(PEnv):
         )
 
         self.td_state['done'] = (~self.td_state['agents']['active_agents_mask']).all(dim=-1)
-        self.td_state['done'][former_done] = True
+        self.td_state['done'] = self.td_state['done'] | former_done
 
         # Depot stays active (scatter True); customer nodes become inactive (scatter False)
         self.td_state['nodes']['active_nodes_mask'].scatter_(1, actions, went_to_depot)
@@ -532,9 +540,7 @@ class Environment(PEnv):
         )
 
         # If all agents are done, activate agent 0 to keep batch consistency
-        self.td_state['agents']['active_agents_mask'][
-            self.td_state['agents']['active_agents_mask'].sum(1).eq(0), 0
-        ] = True
+        self.td_state['agents']['active_agents_mask'][:, 0] |= ~self.td_state['agents']['active_agents_mask'].any(1)
 
     def _update_solution_all(self, actions):
         """
@@ -576,7 +582,7 @@ class Environment(PEnv):
         """
         actions = td["next_actions"]   # [B, A]
         active_agents = self.td_state['agents']['active_agents_mask']  # [B, A]
-        if active_agents.any():
+        if self.check_actions and active_agents.any():
             assert (
                 self.td_state['agents']['action_mask']
                 .gather(2, actions.unsqueeze(-1))

@@ -80,5 +80,5 @@ class SparseReward(RewardFn):
         # compute penalty if env has unvisited nodes
         is_last_step = self.env.td_state['is_last_step']
         final_reward = self.env.td_state['agents']['cum_profit'].sum(-1, keepdim = True)
-        reward[is_last_step] = final_reward[is_last_step]
+        reward = torch.where(is_last_step.unsqueeze(-1), final_reward, reward)
         return reward, penalty

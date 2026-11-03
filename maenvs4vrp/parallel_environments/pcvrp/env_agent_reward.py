@@ -62,9 +62,7 @@ class DenseReward(RewardFn):
             .sum(-1).float()
         )
         # Assign equally to all agents in the last-step rows: [n_done] -> [n_done, A]
-        penalty[is_last_step] = (
-            unvisited_penalty[is_last_step].unsqueeze(-1).expand(-1, self.env.num_agents)
-        )
+        penalty = torch.where(is_last_step.unsqueeze(-1), unvisited_penalty.unsqueeze(-1).expand(-1, self.env.num_agents), penalty)
 
         return reward, penalty
 
@@ -128,9 +126,7 @@ class SparseReward(RewardFn):
             .sum(-1).float()
         )
         # Assign equally to all agents in the last-step rows: [n_done] -> [n_done, A]
-        penalty[is_last_step] = (
-            unvisited_penalty[is_last_step].unsqueeze(-1).expand(-1, self.env.num_agents)
-        )
+        penalty = torch.where(is_last_step.unsqueeze(-1), unvisited_penalty.unsqueeze(-1).expand(-1, self.env.num_agents), penalty)
 
-        reward[is_last_step] = final_reward[is_last_step]
+        reward = torch.where(is_last_step.unsqueeze(-1), final_reward, reward)
         return reward, penalty

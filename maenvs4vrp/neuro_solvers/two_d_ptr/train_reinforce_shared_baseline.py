@@ -414,7 +414,8 @@ def train(args, writer):
                                         reward_evaluator=reward_evaluator,
                                         device=args.env_device,
                                         batch_size = args.batch_size,
-                                        seed=args.seed)
+                                        seed=args.seed,
+                                        check_actions=False)  # actions come from the masked policy
 
 
     if args.val_set == 'None':

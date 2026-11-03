@@ -184,7 +184,7 @@ def train_epoch(args, env, policy, optim, ep, writer):
 
                 td['next_action'] = action.unsqueeze(1).to(args.env_device)
                 # execute the environment and log data
-                td = env.step_agent_select_observe(td, obs_list=['agent_cur_node_idx', 'nodes_static', 'action_mask', 'agent'])
+                td = env.step_agent_select_observe(td, obs_list=['agent_cur_node_idx', 'action_mask', 'agent'])
 
                 logps.append(logprobs)
                 entropy.append(ent)
@@ -298,7 +298,7 @@ def test_epoch(args, test_env, policy, ep, writer):
 
                 # execute the environment and log data
                 td['next_action'] = action.unsqueeze(1).to(args.env_device)
-                td= test_env.step_agent_select_observe(td, obs_list=['agent_cur_node_idx', 'nodes_static', 'action_mask', 'agent'])
+                td= test_env.step_agent_select_observe(td, obs_list=['agent_cur_node_idx', 'action_mask', 'agent'])
 
                 f_reward.append(td['reward'] + td['penalty'])
 
@@ -398,7 +398,8 @@ def train(args, writer):
                                         reward_evaluator=reward_evaluator,
                                         device=args.env_device,
                                         batch_size = args.batch_size,
-                                        seed=args.seed)
+                                        seed=args.seed,
+                                        check_actions=False)  # actions come from the masked policy
 
 
     if args.val_set == 'None':

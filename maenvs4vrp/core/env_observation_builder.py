@@ -137,9 +137,9 @@ class ObservationBuilder:
             f_feat = features_static.get(f).get('feat')
             dim = features_static.get(f).get('dim')
             if dim:
-                feature = eval(f'self.get_feat_{f_feat}')(dim)
+                feature = getattr(self, f'get_feat_{f_feat}')(dim)
             else:
-                feature = eval(f'self.get_feat_{f_feat}')()
+                feature = getattr(self, f'get_feat_{f_feat}')()
             f_norm = features_static.get(f).get('norm')
             norm_feature = self._normalize_feature(feature, f_norm)
             features.append(norm_feature)
@@ -163,9 +163,9 @@ class ObservationBuilder:
             f_feat = features_static.get(f).get('feat')
             dim = features_static.get(f).get('dim')
             if dim:
-                feature = eval(f'self.get_edges_feat_{f_feat}')(dim)
+                feature = getattr(self, f'get_edges_feat_{f_feat}')(dim)
             else:
-                feature = eval(f'self.get_edges_feat_{f_feat}')()
+                feature = getattr(self, f'get_edges_feat_{f_feat}')()
             features.append(feature.unsqueeze(-1) if feature.dim() == 3 else feature)
         return torch.cat(features, dim=-1)
 
@@ -182,7 +182,7 @@ class ObservationBuilder:
         assert len(undefined_feat)==0, assert_msg
         features = list()
         for f in features_dynamic:
-            features.append(eval(f'self.get_feat_{f}')())
+            features.append(getattr(self, f'get_feat_{f}')())
         return self._concat_features(features)
 
     def compute_agent_features(self):
@@ -198,7 +198,7 @@ class ObservationBuilder:
         assert len(undefined_feat)==0, assert_msg
         features = list()
         for f in features_self:
-            features.append(eval(f'self.get_feat_agent_{f}')())
+            features.append(getattr(self, f'get_feat_agent_{f}')())
         return self._concat_features(features).squeeze(1)
 
     def compute_other_agents_features(self):
@@ -214,7 +214,7 @@ class ObservationBuilder:
         assert len(undefined_feat)==0, assert_msg
         features = list()
         for f in features_agents:
-            features.append(eval(f'self.get_feat_other_agents_{f}')())
+            features.append(getattr(self, f'get_feat_other_agents_{f}')())
         return self._concat_features(features)
 
     def compute_all_agents_features(self):
@@ -230,7 +230,7 @@ class ObservationBuilder:
         assert len(undefined_feat)==0, assert_msg
         features = list()
         for f in features_agents:
-            features.append(eval(f'self.get_feat_all_agents_{f}')())
+            features.append(getattr(self, f'get_feat_all_agents_{f}')())
         return self._concat_features(features)
 
 
@@ -247,7 +247,7 @@ class ObservationBuilder:
         assert len(undefined_feat)==0, assert_msg
         features = list()
         for f in features_global:
-            features.append(eval(f'self.get_feat_global_{f}')())
+            features.append(getattr(self, f'get_feat_global_{f}')())
         return self._concat_features(features).squeeze(dim=1)
 
 
