@@ -4,11 +4,11 @@
 MDVRPTW
 =================
 
-Multi-Depot Vehicle Routing Problem with Time Windows (MTVRPTW)
+Multi-Depot Vehicle Routing Problem with Time Windows (MDVRPTW)
 
-The Multi-depot Vehicle Routing Problem with Time Windows (MDVRPTW) is a generalization of the CVRPTW with multiple depots. Each depot has its own set of vehicles that depart and must return to it.
+The Multi-depot Vehicle Routing Problem with Time Windows (MDVRPTW) is a generalization of the CVRPTW with multiple depots (see [Cor97]_). Each depot has its own set of vehicles that depart and must return to it.
 
-Here's everything about MTVRPTW environment:
+Here's everything about MDVRPTW environment:
 
 .. toctree::
     :maxdepth: 1

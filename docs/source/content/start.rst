@@ -5,7 +5,7 @@ MAEnvs4VRP Quickstart
 Welcome to the MAEnvs4VRP Quickstart guide!  
 This tutorial demonstrates the **basic usage** of the library through the ``CVRPTW`` environment example.
 
-If you prefer interactive examples, you can also explore the corresponding Jupyter notebooks in `01: Quickstart <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/1.0.0_quickstart_cvrptw.html>`_.
+If you prefer interactive examples, you can also explore the corresponding Jupyter notebooks in `01: Quickstart <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/1.0.0_quickstart_cvrptw.html>`_.
 
 ------------------
 Basic Usage
@@ -87,19 +87,19 @@ You can find more hands-on examples and advanced topics in the following noteboo
    * - Notebook
      - Description
      - Colab
-   * - `01: Quickstart <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/1.0.0_quickstart_cvrptw.html>`_
+   * - `01: Quickstart <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/1.0.0_quickstart_cvrptw.html>`_
      - Learning MAEnvs4VRP basic usage.
      - |colab-quickstart|
-   * - `02: MAEnvs4VRP Library <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/2.0.0_maenvs4vrp_exploration_and_challenges.html>`_
+   * - `02: MAEnvs4VRP Library <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/2.0.0_maenvs4vrp_exploration_and_challenges.html>`_
      - Exploring MAEnvs4VRP functionality and challenges.
      - |colab-challenges|
-   * - `03: Multi-Tasking Environments <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/3.0.0_multitask_environments.html>`_
+   * - `03: Multi-Tasking Environments <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/3.0.0_multitask_environments.html>`_
      - Understanding multi-tasking behavior across environments.
      - |colab-multitask|
-   * - `04: Stochastic Environments <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/4.0.0_maenvs4vrp_stochastic_environments.html>`_
+   * - `04: Stochastic Environments <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/4.0.0_maenvs4vrp_stochastic_environments.html>`_
      - Extending deterministic environments into stochastic versions.
      - |colab-stochastic|
-   * - `05: PyVRP <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/5.0.0_PyVRP_cvrptw_solver.html>`_
+   * - `05: PyVRP <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/5.0.0_PyVRP_cvrptw_solver.html>`_
      - Integrating PyVRP to solve MAEnvs4VRP instances.
      - |colab-PyVRP|
 

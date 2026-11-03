@@ -1,3 +1,4 @@
+"""2D pointer network policy."""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -59,11 +60,29 @@ class AttentionScore(nn.Module):
     """
 
     def __init__(self, use_tanh=False, C=10):
+        """
+        Initialize the AttentionScore.
+
+        Args:
+            use_tanh (bool, optional): If True, clip the logits with tanh. Defaults to False.
+            C (int, optional): Clipping constant used with tanh. Defaults to 10.
+        """
         super(AttentionScore, self).__init__()
         self.use_tanh = use_tanh
         self.C = C
 
     def forward(self, query, key, mask=None):
+        """
+        Compute the (optionally tanh-clipped) attention logits.
+
+        Args:
+            query: Query tensor.
+            key: Key tensor.
+            mask: Attention mask. Defaults to None.
+
+        Returns:
+            torch.Tensor: Attention logits.
+        """
         u = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(query.size(-1))
         if self.use_tanh:
             logits = torch.tanh(u) * self.C
@@ -107,12 +126,31 @@ class MultiHeadAttention(nn.Module):
     """
 
     def __init__(self, embed_dim, n_heads=8):
+        """
+        Initialize the MultiHeadAttention.
+
+        Args:
+            embed_dim: Embedding dimension.
+            n_heads (int, optional): Number of attention heads. Defaults to 8.
+        """
         super(MultiHeadAttention, self).__init__()
         self.n_heads = n_heads
         self.attentionScore = AttentionScore()
         self.project_out = nn.Linear(embed_dim, embed_dim, bias=False)
 
     def forward(self, query, key, value, mask):
+        """
+        Compute multi-head attention.
+
+        Args:
+            query: Query tensor.
+            key: Key tensor.
+            value: Value tensor.
+            mask: Attention mask.
+
+        Returns:
+            torch.Tensor: Attention output.
+        """
         query_heads = self._make_heads(query)
         key_heads = self._make_heads(key)
         value_heads = self._make_heads(value)
@@ -183,6 +221,13 @@ class MultiHeadAttentionProj(nn.Module):
     """
 
     def __init__(self, embed_dim, n_heads=8):
+        """
+        Initialize the MultiHeadAttentionProj.
+
+        Args:
+            embed_dim: Embedding dimension.
+            n_heads (int, optional): Number of attention heads. Defaults to 8.
+        """
         super(MultiHeadAttentionProj, self).__init__()
 
         self.queryEncoder = nn.Linear(embed_dim, embed_dim, bias=False)
@@ -193,6 +238,17 @@ class MultiHeadAttentionProj(nn.Module):
 
     def forward(self, q, h=None, mask=None):
 
+        """
+        Project the inputs and compute multi-head attention.
+
+        Args:
+            q: Query embeddings.
+            h: Key/value embeddings. If None, self-attention over ``q`` is computed. Defaults to None.
+            mask: Attention mask. Defaults to None.
+
+        Returns:
+            torch.Tensor: Attention output.
+        """
         if h is None:
             h = q  # compute self-attention
 
@@ -205,17 +261,45 @@ class MultiHeadAttentionProj(nn.Module):
         return out
 
 class SkipConnection(nn.Module):
+    """
+    Residual connection around a module.
+    """
     def __init__(self, module):
+        """
+        Initialize the SkipConnection.
+
+        Args:
+            module: Wrapped module.
+        """
         super(SkipConnection, self).__init__()
         self.module = module
 
     def forward(self, input):
+        """
+        Apply the wrapped module with a residual connection.
+
+        Args:
+            input: Input tensor.
+
+        Returns:
+            torch.Tensor: Input plus the module output.
+        """
         return input + self.module(input)
 
 
 
 class Normalization(nn.Module):
+    """
+    Batch, instance or layer normalization over the embedding dimension.
+    """
     def __init__(self, embed_dim, normalization="layer"):
+        """
+        Initialize the Normalization.
+
+        Args:
+            embed_dim: Embedding dimension.
+            normalization (str, optional): Normalization type ("batch", "instance" or "layer"). Defaults to "layer".
+        """
         super(Normalization, self).__init__()
 
         normalizer_class = {"batch": nn.BatchNorm1d, "instance": nn.InstanceNorm1d, "layer": nn.LayerNorm}.get(
@@ -227,11 +311,23 @@ class Normalization(nn.Module):
             self.normalizer = normalizer_class(embed_dim)
 
     def init_parameters(self):
+        """
+        Initialize the normalization parameters uniformly.
+        """
         for name, param in self.named_parameters():
             stdv = 1.0 / math.sqrt(param.size(-1))
             param.data.uniform_(-stdv, stdv)
 
     def forward(self, x):
+        """
+        Normalize the input.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+
+        Returns:
+            torch.Tensor: Normalized input.
+        """
         if isinstance(self.normalizer, nn.BatchNorm1d):
             return self.normalizer(x.view(-1, x.size(-1))).view(*x.size())
         elif isinstance(self.normalizer, nn.InstanceNorm1d):
@@ -283,6 +379,14 @@ class MultiHeadAttentionLayer(nn.Sequential):
         embed_dim,
         feed_forward_hidden=512,
     ):
+        """
+        Initialize the MultiHeadAttentionLayer.
+
+        Args:
+            n_heads (int): Number of attention heads.
+            embed_dim: Embedding dimension.
+            feed_forward_hidden (int, optional): Hidden size of the feed-forward layers. Defaults to 512.
+        """
         super(MultiHeadAttentionLayer, self).__init__(
             SkipConnection(
                 MultiHeadAttentionProj(
@@ -328,6 +432,15 @@ class GraphAttentionEncoder(nn.Module):
     """
 
     def __init__(self, n_heads, embed_dim, n_layers, feed_forward_hidden=512):
+        """
+        Initialize the GraphAttentionEncoder.
+
+        Args:
+            n_heads (int): Number of attention heads.
+            embed_dim: Embedding dimension.
+            n_layers: Number of attention layers.
+            feed_forward_hidden (int, optional): Hidden size of the feed-forward layers. Defaults to 512.
+        """
         super(GraphAttentionEncoder, self).__init__()
 
         self.layers = nn.Sequential(
@@ -339,6 +452,16 @@ class GraphAttentionEncoder(nn.Module):
 
     def forward(self, x, mask=None):
 
+        """
+        Encode the nodes with the graph attention layers.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+            mask: Attention mask. Defaults to None.
+
+        Returns:
+            tuple: Node embeddings and their mean (graph embedding).
+        """
         assert mask is None, "TODO mask not yet supported!"
 
         h = self.layers(x)
@@ -350,10 +473,27 @@ class DynamicEmbedding(nn.Module):
     """
 
     def __init__(self, nodes_dyn_dim, embed_dim, linear_bias=False):
+        """
+        Initialize the DynamicEmbedding.
+
+        Args:
+            nodes_dyn_dim: Dimension of the dynamic node observations.
+            embed_dim: Embedding dimension.
+            linear_bias (bool, optional): Whether the projection uses a bias. Defaults to False.
+        """
         super(DynamicEmbedding, self).__init__()
         self.projection = nn.Linear(nodes_dyn_dim, 3 * embed_dim, bias=linear_bias)
 
     def forward(self, dyn_node_obs):
+        """
+        Project the dynamic node observations into glimpse keys, values and logit keys.
+
+        Args:
+            dyn_node_obs: Dynamic node observations.
+
+        Returns:
+            tuple: Dynamic glimpse keys, glimpse values and logit keys.
+        """
         glimpse_key_dynamic, glimpse_val_dynamic, logit_key_dynamic = self.projection(
             dyn_node_obs
         ).chunk(3, dim=-1)
@@ -362,10 +502,22 @@ class DynamicEmbedding(nn.Module):
 
 
 class PolicyNet(nn.Module):
+    """
+    2D pointer network policy: selects an (agent, node) pair at each step.
+    """
     def __init__(self, nodes_stat_obs_dim,
                        nodes_dyn_obs_dim,
                        agents_obs_dim,
                        embed_dim):
+        """
+        Initialize the PolicyNet.
+
+        Args:
+            nodes_stat_obs_dim: Dimension of the static node observations.
+            nodes_dyn_obs_dim: Dimension of the dynamic node observations.
+            agents_obs_dim: Dimension of the agents observations.
+            embed_dim: Embedding dimension.
+        """
         super(PolicyNet, self).__init__()
 
         self.nodes_embedding = nn.Linear(nodes_stat_obs_dim, embed_dim, bias = False)
@@ -414,6 +566,12 @@ class PolicyNet(nn.Module):
 
     def make_cache_(self, nodes_obs):
 
+        """
+        Encode the nodes once and cache the embeddings used by the decoder.
+
+        Args:
+            nodes_obs: Node observations.
+        """
         nodes_emb = self.nodes_embedding(nodes_obs)
         nodes_encoded, graph_embed = self.nodes_encoder(nodes_emb)
         graph_context = self.project_fixed_context(graph_embed)[:, None, :]
@@ -435,6 +593,19 @@ class PolicyNet(nn.Module):
 
     def forward(self, nodes_dyn_obs=None, all_agents_obs=None, cur_nodes_idx=None, agents_action_mask=None, active_agents_mask=None):
 
+        """
+        Compute the action logits for the current agent(s).
+
+        Args:
+            nodes_dyn_obs: Dynamic node observations. Defaults to None.
+            all_agents_obs: Observations of all agents. Defaults to None.
+            cur_nodes_idx: Index of the current node of each agent. Defaults to None.
+            agents_action_mask: Mask of feasible actions for each agent. Defaults to None.
+            active_agents_mask: Mask of active agents. Defaults to None.
+
+        Returns:
+            torch.Tensor: Joint (agent, node) action logits.
+        """
         agents_embed = self.agents_embedding(all_agents_obs) + self.pe
 
         prev_node_embedding = self._prev_node_embedding(cur_nodes_idx)
@@ -457,6 +628,20 @@ class PolicyNet(nn.Module):
         return logits
 
     def get_action(self, nodes_obs=None, all_agents_obs=None,  cur_nodes_idx=None, agents_action_mask=None, active_agents_mask=None, deterministic=False):
+        """
+        Select an action.
+
+        Args:
+            nodes_obs: Node observations. Defaults to None.
+            all_agents_obs: Observations of all agents. Defaults to None.
+            cur_nodes_idx: Index of the current node of each agent. Defaults to None.
+            agents_action_mask: Mask of feasible actions for each agent. Defaults to None.
+            active_agents_mask: Mask of active agents. Defaults to None.
+            deterministic (bool, optional): If True, select the most likely action instead of sampling. Defaults to False.
+
+        Returns:
+            tuple: Selected node and agent.
+        """
         action_logits = self.forward(nodes_obs, all_agents_obs, cur_nodes_idx, agents_action_mask, active_agents_mask)
 
         bs, m, n = agents_action_mask.size()
@@ -473,6 +658,21 @@ class PolicyNet(nn.Module):
 
 
     def get_action_and_logs(self, nodes_obs=None, all_agents_obs=None,  cur_nodes_idx=None, agents_action_mask=None, active_agents_mask=None, action=None, deterministic=False):
+        """
+        Select (or evaluate) an action and return its log-probability and entropy.
+
+        Args:
+            nodes_obs: Node observations. Defaults to None.
+            all_agents_obs: Observations of all agents. Defaults to None.
+            cur_nodes_idx: Index of the current node of each agent. Defaults to None.
+            agents_action_mask: Mask of feasible actions for each agent. Defaults to None.
+            active_agents_mask: Mask of active agents. Defaults to None.
+            action (torch.Tensor, optional): Action to evaluate. If None, an action is selected. Defaults to None.
+            deterministic (bool, optional): If True, select the most likely action instead of sampling. Defaults to False.
+
+        Returns:
+            tuple: Selected node and agent, the log-probability and the distribution entropy.
+        """
         action_logits = self.forward(nodes_obs, all_agents_obs, cur_nodes_idx, agents_action_mask, active_agents_mask)
 
         bs, m, n = agents_action_mask.size()

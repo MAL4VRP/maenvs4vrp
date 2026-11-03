@@ -4,7 +4,7 @@
 TOPTW
 ==========
 
-Parallel environment for the Team Orienteering Problem with Time Windows (TOPTW).
+Parallel environment for the Team Orienteering Problem with Time Windows (TOPTW), see [Van09]_.
 
 .. toctree::
     :maxdepth: 1

@@ -1,50 +1,46 @@
-def pytest_addoption(parser):
-    parser.addoption(
-        "--device",
-        action="store",
-        default="cpu",
-        help="Which device use for training. It can be 'cpu' or 'gpu'."
-    )
-
-    parser.addoption(
-        "--batch", "--batch_size",
-        action="store",
-        default=None,
-        help="Batch size to run the tests"
-    )
-
-    parser.addoption(
-        "--agents", "--num_agents",
-        action="append",
-        default=None,
-        help="Number of agents. It can be one or more integers."
-    )
-
-    parser.addoption(
-        "--nodes", "--num_nodes",
-        action="append",
-        default=None,
-        help="Number of nodes. It can be one or more integers."
-    )
+"""Pytest configuration: command line options for the solution validity tests."""
+from dataclasses import dataclass
 
 import pytest
+import torch
+
+DEFAULT_NUM_AGENTS = [2, 5]
+DEFAULT_NUM_NODES = [11, 21]
+
+
+def pytest_addoption(parser):
+    parser.addoption("--device", action="store", default="cpu",
+                     help='Device used by the environments: "cpu" or "cuda" ("gpu" is accepted as an alias).')
+    parser.addoption("--batch", "--batch_size", action="store", default=None,
+                     help="Batch size used by the solution validity tests.")
+    parser.addoption("--agents", "--num_agents", action="append", default=None,
+                     help="Number of agents. Repeat the option to test several values.")
+    parser.addoption("--nodes", "--num_nodes", action="append", default=None,
+                     help="Number of nodes. Repeat the option to test several values.")
+
+
+@dataclass
+class Sizes:
+    """Problem sizes used by the solution validity tests."""
+    device: torch.device
+    batch_size: int
+    num_agents: list
+    num_nodes: list
+
 
 @pytest.fixture(scope="session")
-def device(request):
-    return request.config.getoption("--device")
+def sizes(request) -> Sizes:
+    """
+    Problem sizes from the command line, with small defaults.
 
-@pytest.fixture(scope="session")
-def batch(request):
-    return request.config.getoption("--batch")
-
-@pytest.fixture(scope="session")
-def num_agents(request):
-    return request.config.getoption("--num_agents")
-
-@pytest.fixture(scope="session")
-def num_nodes(request):
-    return request.config.getoption("--num_nodes")
-
-def pytest_configure(config):
-    config.option.log_cli = True
-    config.option.log_cli_level = "WARNING"
+    Returns:
+        Sizes: Device, batch size, numbers of agents and numbers of nodes.
+    """
+    device = request.config.getoption("--device")
+    batch = request.config.getoption("--batch")
+    agents = request.config.getoption("--agents")
+    nodes = request.config.getoption("--nodes")
+    return Sizes(device=torch.device("cuda" if device in ("cuda", "gpu") else "cpu"),
+                 batch_size=int(batch) if batch is not None else 2,
+                 num_agents=[int(a) for a in agents] if agents else DEFAULT_NUM_AGENTS,
+                 num_nodes=[int(n) for n in nodes] if nodes else DEFAULT_NUM_NODES)

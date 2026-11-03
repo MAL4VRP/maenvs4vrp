@@ -6,10 +6,10 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32'",
-    "python_full_version < '3.12' and sys_platform == 'win32'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten'",
-    "python_full_version < '3.12' and sys_platform == 'emscripten'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.12' and sys_platform == 'win32'",
+    "python_full_version < '3.12' and sys_platform == 'emscripten'",
     "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
@@ -499,7 +499,7 @@ name = "cuda-bindings"
 version = "13.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-pathfinder", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "cuda-pathfinder" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e0/a9/3a8241c6e19483ac1f1dcf5c10238205dcb8a6e9d0d4d4709240dff28ff4/cuda_bindings-13.2.0-cp311-cp311-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:721104c603f059780d287969be3d194a18d0cc3b713ed9049065a1107706759d", size = 5730273, upload-time = "2026-03-11T00:12:37.18Z" },
@@ -532,34 +532,34 @@ wheels = [
 
 [package.optional-dependencies]
 cudart = [
-    { name = "nvidia-cuda-runtime", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cuda-runtime" },
 ]
 cufft = [
-    { name = "nvidia-cufft", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cufft" },
 ]
 cufile = [
-    { name = "nvidia-cufile", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cufile" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cuda-cupti" },
 ]
 curand = [
-    { name = "nvidia-curand", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-curand" },
 ]
 cusolver = [
-    { name = "nvidia-cusolver", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cusolver" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cusparse" },
 ]
 nvjitlink = [
-    { name = "nvidia-nvjitlink", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-nvjitlink" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cuda-nvrtc" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-nvtx" },
 ]
 
 [[package]]
@@ -1422,7 +1422,7 @@ wheels = [
 
 [[package]]
 name = "maenvs4vrp"
-version = "0.2.1"
+version = "0.3.1"
 source = { editable = "." }
 dependencies = [
     { name = "huggingface-hub" },
@@ -1430,6 +1430,7 @@ dependencies = [
     { name = "ml-collections" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pyyaml" },
     { name = "scipy" },
     { name = "tensorboard" },
     { name = "tensordict" },
@@ -1443,13 +1444,21 @@ dev = [
     { name = "ipykernel" },
     { name = "ipywidgets" },
     { name = "jupyter" },
+    { name = "nbclient" },
+    { name = "nbformat" },
+    { name = "packaging" },
     { name = "pytest" },
 ]
 docs = [
     { name = "furo" },
+    { name = "ipython" },
     { name = "nbsphinx" },
     { name = "sphinx-copybutton" },
     { name = "sphinx-math-dollar" },
+]
+notebooks = [
+    { name = "jupyter" },
+    { name = "pyvrp" },
 ]
 
 [package.metadata]
@@ -1457,14 +1466,21 @@ requires-dist = [
     { name = "furo", marker = "extra == 'docs'", specifier = ">=2024.8.6" },
     { name = "huggingface-hub", specifier = ">=0.10.0" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.0.0" },
+    { name = "ipython", marker = "extra == 'docs'", specifier = ">=8.0" },
     { name = "ipywidgets", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "jupyter", marker = "extra == 'dev'", specifier = ">=1.0.0" },
+    { name = "jupyter", marker = "extra == 'notebooks'", specifier = ">=1.0.0" },
     { name = "matplotlib", specifier = ">=3.10.5" },
     { name = "ml-collections", specifier = ">=0.1.0" },
+    { name = "nbclient", marker = "extra == 'dev'", specifier = ">=0.7" },
+    { name = "nbformat", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "nbsphinx", marker = "extra == 'docs'", specifier = ">=0.9.5" },
     { name = "numpy", specifier = ">=2.3.1" },
+    { name = "packaging", marker = "extra == 'dev'", specifier = ">=23.0" },
     { name = "pandas", specifier = ">=2.3.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.3" },
+    { name = "pyvrp", marker = "extra == 'notebooks'", specifier = ">=0.9.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "scipy", specifier = ">=1.0.0" },
     { name = "sphinx-copybutton", marker = "extra == 'docs'", specifier = ">=0.5.2" },
     { name = "sphinx-math-dollar", marker = "extra == 'docs'", specifier = ">=1.2.1" },
@@ -1474,7 +1490,7 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4.66.1" },
     { name = "wandb", specifier = ">=0.10.0" },
 ]
-provides-extras = ["dev", "docs"]
+provides-extras = ["dev", "docs", "notebooks"]
 
 [[package]]
 name = "markdown"
@@ -1890,7 +1906,7 @@ name = "nvidia-cublas"
 version = "13.1.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cuda-nvrtc", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "nvidia-cuda-nvrtc" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/a1/0bd24ee8c8d03adac032fd2909426a00c88f8c57961b1277ded97f91119f/nvidia_cublas-13.1.1.3-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:b7a210458267ac818974c53038fbec2e969d5c99f305ab15c72522fa9f001dd5", size = 542848918, upload-time = "2026-04-08T18:46:22.985Z" },
@@ -1929,7 +1945,7 @@ name = "nvidia-cudnn-cu13"
 version = "9.20.0.48"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "nvidia-cublas" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/56/c5/83384d846b2fd17c44bd499b36c75a45ed4f095fbbb2252294e89cea5c5c/nvidia_cudnn_cu13-9.20.0.48-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:e31454ae00094b0c55319d9d15b6fa2fc50a9e1c0f5c8c80fb75258234e731e1", size = 444574296, upload-time = "2026-03-09T19:28:27.751Z" },
@@ -1941,7 +1957,7 @@ name = "nvidia-cufft"
 version = "12.0.0.61"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "nvidia-nvjitlink" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/ae/f417a75c0259e85c1d2f83ca4e960289a5f814ed0cea74d18c353d3e989d/nvidia_cufft-12.0.0.61-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:2708c852ef8cd89d1d2068bdbece0aa188813a0c934db3779b9b1faa8442e5f5", size = 214053554, upload-time = "2025-09-04T08:31:38.196Z" },
@@ -1971,9 +1987,9 @@ name = "nvidia-cusolver"
 version = "12.0.4.66"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
-    { name = "nvidia-cusparse", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
-    { name = "nvidia-nvjitlink", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "nvidia-cublas" },
+    { name = "nvidia-cusparse" },
+    { name = "nvidia-nvjitlink" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/c3/b30c9e935fc01e3da443ec0116ed1b2a009bb867f5324d3f2d7e533e776b/nvidia_cusolver-12.0.4.66-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:02c2457eaa9e39de20f880f4bd8820e6a1cfb9f9a34f820eb12a155aa5bc92d2", size = 223467760, upload-time = "2025-09-04T08:33:04.222Z" },
@@ -1985,7 +2001,7 @@ name = "nvidia-cusparse"
 version = "12.6.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "nvidia-nvjitlink" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/94/5c26f33738ae35276672f12615a64bd008ed5be6d1ebcb23579285d960a9/nvidia_cusparse-12.6.3.3-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:80bcc4662f23f1054ee334a15c72b8940402975e0eab63178fc7e670aa59472c", size = 162155568, upload-time = "2025-09-04T08:33:42.864Z" },
@@ -2206,7 +2222,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "ptyprocess" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [
@@ -2588,6 +2604,46 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/32/99/23c73a1298b1c642d8ebdd78e1db4daf1e474152e6839df4f5c93357a3db/pyvers-0.2.2.tar.gz", hash = "sha256:205026bcd0b4c09198cb3a32f243fd179ef012882ce16d93dcb755320acd56f7", size = 12104, upload-time = "2026-01-23T14:12:07.619Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/36/bf/ea840f706b7824dd57220484465995309c8c217995ddb7ce4b262240e912/pyvers-0.2.2-py3-none-any.whl", hash = "sha256:c4696408a0b15fbaa90df33d3bc579cf23a74a73541858f5470216f12f51f3b1", size = 11569, upload-time = "2026-01-23T14:12:06.246Z" },
+]
+
+[[package]]
+name = "pyvrp"
+version = "0.14.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "tqdm" },
+    { name = "vrplib" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8a/59/a7e4304ff932b0c07b55c7d8b65e9488ee4a508b5a720d8e7d979edfb32c/pyvrp-0.14.0.tar.gz", hash = "sha256:58a4a6027c12f3e8673f9b087195b80ab75e9a2ca0ae3a4c808f37a53fca630f", size = 721665, upload-time = "2026-08-20T08:36:34.056Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2c/28/250a961bdfcac98b2899dd8683e6881ddd117d39732f66b4d0ab2dc79e7d/pyvrp-0.14.0-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:526f18671529bd5bdb0bc5ff69a9d78dfb70d7a4bb8c85c6ecc0d6c834b70a2d", size = 811276, upload-time = "2026-08-20T08:36:39.813Z" },
+    { url = "https://files.pythonhosted.org/packages/98/61/ef04052437466b703a83292fbccb15f3b25fe977862682c39055648ed6d1/pyvrp-0.14.0-cp311-cp311-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:205bb6315a73b7c56dee2290589725d7f90968c691d06496df5089521878d5b0", size = 1113674, upload-time = "2026-08-20T08:36:38.59Z" },
+    { url = "https://files.pythonhosted.org/packages/67/f8/53a372e47fcff76d7512b8d2b64a3c4f2a400947f9c40286b00daf69b230/pyvrp-0.14.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0e00aa318d40541db7ad0cfcfb17d323790f9f81def99e01f57805b826aab9e4", size = 1235714, upload-time = "2026-08-20T08:36:31.133Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/fa/c0e81776f4f9ede5ca49bb9353878e7d7656548da903fee5b080462a1e4f/pyvrp-0.14.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:041146eb94ef56c5ab46fc213387da54ba3afb1d63e98bf1abbfc28ef9ad8e4a", size = 1934941, upload-time = "2026-08-20T08:36:36.923Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/2d/388b823fa9dced2b74d5cf54e06a65e69eefcdb2666e6fd573552828d013/pyvrp-0.14.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:b042b5a1a2c30db209b7b4ff6d9e9699d21a1dea55e21381e34f81b3d0c007c1", size = 2073689, upload-time = "2026-08-20T08:36:45.478Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/d6/d07db2856cb0af168b0d4235d963fb9a35e7029d0a9f49d6ce1a1fb2bdd7/pyvrp-0.14.0-cp311-cp311-win_amd64.whl", hash = "sha256:1abfc05840b5a9cb1926dc9e733e75af710436a45bca607abb9c7842c5f7baf8", size = 1808145, upload-time = "2026-08-20T08:36:48.077Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/83/8f8a03c5038ca9b4295eb3a5d8d9676697c0558780c707e554b6a8ce383d/pyvrp-0.14.0-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:6a4512e6008216d829e595dba53e7b3e663839918dfce5721623415694562650", size = 814547, upload-time = "2026-08-20T08:36:29.874Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/60/4217bf4ef21675fb2f4d4e8cd0601599e9efbf049320e2afb58baa23d9ad/pyvrp-0.14.0-cp312-cp312-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7c425bbca2f9844b53a4ef408cd5b8d511721a603c1dd728156323f1d2eab692", size = 1111827, upload-time = "2026-08-20T08:36:57.059Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/6a/b42806f0806c6fde7739273eed534fed1a2e81e3412bcfe01a0f27a98cf0/pyvrp-0.14.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4e0053459a9320b79f074f2cd05ecbb4cd255df4d166945c62547c956b1e4170", size = 1235238, upload-time = "2026-08-20T08:36:55.776Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/98/db674fba897334c4f41539961a62134ba0bbe98aa82437d52683832cfd22/pyvrp-0.14.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:2b5505a8f09197a0d6b94a9e3354bae169d4f8bcf058e718f2a6241c24810833", size = 1930872, upload-time = "2026-08-20T08:36:24.364Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/f3/07cf2255494fa93f0e55bf7e9120b87820ed0313370dae72fb5779c00fb8/pyvrp-0.14.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:cfd8f5835403bae742045204aed244c7ee2ee25fc37753e82ed2fd56b87a54ed", size = 2071568, upload-time = "2026-08-20T08:36:58.356Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/4c/44b21252513a46d523d2a9f9ab4a54ad4599d870ff186ce6b344a7dab3e7/pyvrp-0.14.0-cp312-cp312-win_amd64.whl", hash = "sha256:b3ce60d4714be39dbd382c40296fb754d649b1bfe5b462c9748ff50786d8c12f", size = 1805753, upload-time = "2026-08-20T08:36:46.582Z" },
+    { url = "https://files.pythonhosted.org/packages/00/0e/93f4952243cf16a4a49642dbaa1cc6836ec8f3d5d3311ad6d8d405993e28/pyvrp-0.14.0-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:887a0920785ddc712091a1c591bf0756f60d9903ca8d850d9e89143b9f6f76e0", size = 814613, upload-time = "2026-08-20T08:36:32.4Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/00/4cd0b7d389143d67de31f63f0cc93ab4ff941c1e988a263ab3ec481db2ef/pyvrp-0.14.0-cp313-cp313-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5eddec86e9c4ccdf27117a6f04757764d193d5b5413598524ffb502b8479d228", size = 1112471, upload-time = "2026-08-20T08:36:41.376Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/c1/30f13f65bf8202d8efe5cacc25ae05ebacb37967c69410ccd185614fcefc/pyvrp-0.14.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8ea9abe90e5361b2ac78927d01c7798de8396b0d5c96091a4adfe8c32c4a1d8f", size = 1235826, upload-time = "2026-08-20T08:36:35.151Z" },
+    { url = "https://files.pythonhosted.org/packages/17/e9/fd37e47af0992a4fd9bd8459ff7f77e6b1a3deb00fb4f81f2c36d34a3810/pyvrp-0.14.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:0695eb50f5f5da2d1223f95b0e111ce7683d2c56031885ba8573cf950872dcdb", size = 1930726, upload-time = "2026-08-20T08:36:49.608Z" },
+    { url = "https://files.pythonhosted.org/packages/93/03/2aded6879a8733361ee69399bc3d09bf6d33e5861ef8c5f74ad7e85fe0d7/pyvrp-0.14.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:596ea4f62464451e451424031b585a2b077f96635e5ad326eadca8e38537185b", size = 2071533, upload-time = "2026-08-20T08:36:51.507Z" },
+    { url = "https://files.pythonhosted.org/packages/01/49/fce02f4b8dce784540a1e12dd42a606f3a187c11cce9bc46d172ad18fcfa/pyvrp-0.14.0-cp313-cp313-pyemscripten_2025_0_wasm32.whl", hash = "sha256:c420d5d8e5c2b2f4407a60c6e7437bc108a521b89c8c8b550069d5834f008368", size = 682254, upload-time = "2026-08-20T08:36:53.315Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/6d/f6815678a71018c6a11ea2ca817be6fdd8e70627f6bcf4ef95087b3f8202/pyvrp-0.14.0-cp313-cp313-win_amd64.whl", hash = "sha256:4138f25be32c4c6b32b6a64cb07638a0e95df446ee8275bd28d7505279de67e9", size = 1805520, upload-time = "2026-08-20T08:36:43.911Z" },
+    { url = "https://files.pythonhosted.org/packages/98/c0/140d17e6d128bf81405f5b39e64d90d4f19315a554feac396feff01546c4/pyvrp-0.14.0-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:2f549b59e5ed987178b8d20ded3a3703c09f7612cf42c860437149f9a6db9d43", size = 816352, upload-time = "2026-08-20T08:36:54.573Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/2c/9b183cbb9765426937dc402fff816c61623a6549e81f2e1858a07774e413/pyvrp-0.14.0-cp314-cp314-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b29f0bd82ec8f862b6eeb954086c16a8c29c426adbc1b5234b7e4953b3fae981", size = 1113712, upload-time = "2026-08-20T08:36:25.871Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/8b/95062e38b4fa57a8d1586332d31dab79f18a96301054cac3f1ffd7ebfe61/pyvrp-0.14.0-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2e90daf3ede29802cb21c9da555b4325c75b90935fcef69c9e561f20df84a534", size = 1236035, upload-time = "2026-08-20T08:36:21.778Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/14/bad84e131b6d6a3b0b17146f36be5a3dfd04a61fd56c7e6ccf12b0096ead/pyvrp-0.14.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:c8c4948366f0c87348e5d820abaa92eb2dada07a5591831d2758d31a32e41ddb", size = 1932000, upload-time = "2026-08-20T08:36:23.111Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/b6/e7c12f5d0433bb0623c742175fdd553a4dd4a44bf55b5e4ef6ddfcee44c9/pyvrp-0.14.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:220b87f98fb7e30cb9996d71d48415bd8e4f0fb8238eddc9e806d081b02fcca3", size = 2071873, upload-time = "2026-08-20T08:36:42.653Z" },
+    { url = "https://files.pythonhosted.org/packages/75/5e/5b562f3b7b98db18e2aed133373e697c6c96b5805d35221ac8b94caff512/pyvrp-0.14.0-cp314-cp314-pyemscripten_2026_0_wasm32.whl", hash = "sha256:cdd4ea5fb5e48035e880bf3c7fbdb473c78e6e2b6d49eca93ecec47f10e83275", size = 687406, upload-time = "2026-08-20T08:36:27.11Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/84/6307ec040c1ea570ebb212da3b86f97aa15e3263695c6508cb2c81db5dda/pyvrp-0.14.0-cp314-cp314-win_amd64.whl", hash = "sha256:f2abff8b98d80223af522f52cd5c56484f56b5e74ccd9b43e146124c95c5ec19", size = 1874992, upload-time = "2026-08-20T08:36:28.546Z" },
 ]
 
 [[package]]
@@ -3072,23 +3128,23 @@ resolution-markers = [
     "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version < '3.12'" },
-    { name = "babel", marker = "python_full_version < '3.12'" },
-    { name = "colorama", marker = "python_full_version < '3.12' and sys_platform == 'win32'" },
-    { name = "docutils", marker = "python_full_version < '3.12'" },
-    { name = "imagesize", marker = "python_full_version < '3.12'" },
-    { name = "jinja2", marker = "python_full_version < '3.12'" },
-    { name = "packaging", marker = "python_full_version < '3.12'" },
-    { name = "pygments", marker = "python_full_version < '3.12'" },
-    { name = "requests", marker = "python_full_version < '3.12'" },
-    { name = "roman-numerals", marker = "python_full_version < '3.12'" },
-    { name = "snowballstemmer", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version < '3.12'" },
+    { name = "alabaster" },
+    { name = "babel" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "docutils" },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "packaging" },
+    { name = "pygments" },
+    { name = "requests" },
+    { name = "roman-numerals" },
+    { name = "snowballstemmer" },
+    { name = "sphinxcontrib-applehelp" },
+    { name = "sphinxcontrib-devhelp" },
+    { name = "sphinxcontrib-htmlhelp" },
+    { name = "sphinxcontrib-jsmath" },
+    { name = "sphinxcontrib-qthelp" },
+    { name = "sphinxcontrib-serializinghtml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/50/a8c6ccc36d5eacdfd7913ddccd15a9cee03ecafc5ee2bc40e1f168d85022/sphinx-9.0.4.tar.gz", hash = "sha256:594ef59d042972abbc581d8baa577404abe4e6c3b04ef61bd7fc2acbd51f3fa3", size = 8710502, upload-time = "2025-12-04T07:45:27.343Z" }
 wheels = [
@@ -3108,23 +3164,23 @@ resolution-markers = [
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version >= '3.12'" },
-    { name = "babel", marker = "python_full_version >= '3.12'" },
-    { name = "colorama", marker = "python_full_version >= '3.12' and sys_platform == 'win32'" },
-    { name = "docutils", marker = "python_full_version >= '3.12'" },
-    { name = "imagesize", marker = "python_full_version >= '3.12'" },
-    { name = "jinja2", marker = "python_full_version >= '3.12'" },
-    { name = "packaging", marker = "python_full_version >= '3.12'" },
-    { name = "pygments", marker = "python_full_version >= '3.12'" },
-    { name = "requests", marker = "python_full_version >= '3.12'" },
-    { name = "roman-numerals", marker = "python_full_version >= '3.12'" },
-    { name = "snowballstemmer", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version >= '3.12'" },
+    { name = "alabaster" },
+    { name = "babel" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "docutils" },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "packaging" },
+    { name = "pygments" },
+    { name = "requests" },
+    { name = "roman-numerals" },
+    { name = "snowballstemmer" },
+    { name = "sphinxcontrib-applehelp" },
+    { name = "sphinxcontrib-devhelp" },
+    { name = "sphinxcontrib-htmlhelp" },
+    { name = "sphinxcontrib-jsmath" },
+    { name = "sphinxcontrib-qthelp" },
+    { name = "sphinxcontrib-serializinghtml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cd/bd/f08eb0f4eed5c83f1ba2a3bd18f7745a2b1525fad70660a1c00224ec468a/sphinx-9.1.0.tar.gz", hash = "sha256:7741722357dd75f8190766926071fed3bdc211c74dd2d7d4df5404da95930ddb", size = 8718324, upload-time = "2025-12-31T15:09:27.646Z" }
 wheels = [
@@ -3512,6 +3568,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/53/0c/06f8b233b8fd13b9e5ee11424ef85419ba0d8ba0b3138bf360be2ff56953/urllib3-2.7.0.tar.gz", hash = "sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c", size = 433602, upload-time = "2026-05-07T16:13:18.596Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897", size = 131087, upload-time = "2026-05-07T16:13:17.151Z" },
+]
+
+[[package]]
+name = "vrplib"
+version = "2.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/35/57055aaa3c42efb5e314ba81ab0274d5694d365dc7a97f7584d64923ed05/vrplib-2.2.0.tar.gz", hash = "sha256:806177ecb52ae63b126700135ad08c9c27054bf780525bcdcd7cea4b4848886f", size = 10756, upload-time = "2026-04-06T07:47:29.615Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/26/0d/377dd5a682ff62bb043ec08a8f70941d6e43ff71d4727942a34ab939f531/vrplib-2.2.0-py3-none-any.whl", hash = "sha256:5bed28c4ff8cfaf99da7af3081e5627bc4108f0056abc25be0285d0a8b9ad104", size = 15724, upload-time = "2026-04-06T07:47:28.507Z" },
 ]
 
 [[package]]

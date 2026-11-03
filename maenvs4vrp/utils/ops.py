@@ -1,14 +1,15 @@
+"""Tensor operations used by the environments."""
 from torch import Tensor
 
 def get_distance(x: Tensor, y: Tensor):
 
     """
-    Euclidean distance between two tensors of shape `[..., n, dim].
+    Euclidean distance between two tensors of shape ``[..., n, dim]``.
     Taken from: https://github.com/ai4co/rl4co/blob/main/rl4co/utils/ops.py
 
     Args:
-        x(torch.Tensor): Point x.
-        y(torch.Tensor): Point y.
+        x (Tensor): Point x.
+        y (Tensor): Point y.
 
     Returns:
         torch.Tensor: Distance between x and y.
@@ -19,6 +20,15 @@ def get_distance(x: Tensor, y: Tensor):
 def gather_by_index(src, idx, dim=1, squeeze=True):
     """
     https://github.com/ai4co/rl4co
+
+    Args:
+        src: Source tensor to gather from.
+        idx: Indices to gather.
+        dim (int, optional): Dimension along which to gather. Defaults to 1.
+        squeeze (bool, optional): If True, squeeze the gathered dimension. Defaults to True.
+
+    Returns:
+        torch.Tensor: Gathered values.
     """
     expanded_shape = list(src.shape)
     expanded_shape[dim] = -1

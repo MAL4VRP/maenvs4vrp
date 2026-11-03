@@ -18,7 +18,3 @@ InstanceGenerator
 .. autoclass:: maenvs4vrp.environments.dvrptw.instances_generator.InstanceGenerator
     :members:
     :special-members: __init__
-
-**References**
-
-.. [Li21] Li, Z. Yan, C. Wu, “Learning to delegate for large-scale vehicle routing”, Thirty-Fifth Conference on Neural Information Processing Systems, 2021;

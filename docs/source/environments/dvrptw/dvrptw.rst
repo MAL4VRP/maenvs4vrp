@@ -6,7 +6,7 @@ DVRPTW
 
 Dynamic Capacitated Vehicle Routing Problem with Time Windows (DVRPTW)
 
-The DCVRPTW is a generalization of the classical Capacitated Vehicle Routing Problem with Time Windows, incorporating uncertain and dynamic changes during operation: not all information is known offline, as the environment evolves due to dynamic customer requests that arrive sequentially while vehicles are en route, requiring that all vehicle capacity and customer time window constraints be met despite these dynamic changes (see [BONO2021]_).
+The DCVRPTW is a generalization of the classical Capacitated Vehicle Routing Problem with Time Windows, incorporating uncertain and dynamic changes during operation: not all information is known offline, as the environment evolves due to dynamic customer requests that arrive sequentially while vehicles are en route, requiring that all vehicle capacity and customer time window constraints be met despite these dynamic changes (see [Bon21]_).
 
 Here's everything about DVRPTW environment:
 
@@ -18,7 +18,3 @@ Here's everything about DVRPTW environment:
     environment/environment
     generation/generation
     observations/observations
-
-**References**
-
-.. [BONO2021] Bono, G., Dibangoye, J. S., Simonin, O., Matignon, L., & Pereyron, F. (2021). **Solving Multi-Agent Routing Problems Using Deep Attention Mechanisms**. *IEEE Transactions on Intelligent Transportation Systems*, 22(12), 7804–7813;
