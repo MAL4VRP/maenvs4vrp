@@ -1,3 +1,4 @@
+"""Base class for agent selectors."""
 
 class BaseSelector():
     """ Agent iterator base class.
@@ -5,13 +6,7 @@ class BaseSelector():
 
     def __init__(self):
         """
-        Constructor
-
-        Args:
-            n/a.
-
-        Returns:
-            None.
+        Initialize the agent selector.
         """
 
 
@@ -20,21 +15,12 @@ class BaseSelector():
         Set environment.
 
         Args:
-            env(AECEnv): Environment.
-
-        Returns:
-            None.
+            env (AECEnv): Environment.
         """
         self.env = env
 
     def _next_agent(self):
         """
         Return the next agent.
-
-        Args:
-            n/a.
-
-        Returns:
-            selected_agent(Tensor): Next agent.
         """
         raise NotImplementedError()

@@ -1,3 +1,4 @@
+"""Data augmentation utilities for instance coordinates."""
 import torch
 import os
 from typing import Tuple
@@ -6,11 +7,16 @@ from torch import Tensor
 
 
 def rotate_coord_augment(self, xy_data, origin=torch.tensor([0, 0]), seed=None):
-        """Rotate coords around a given point.
+        """
+        Rotate coords around a given point.
 
         Args:
-            coords: coords tensor
+            xy_data: Coordinates to augment, with shape [..., 2].
+            origin: Rotation origin. Defaults to torch.tensor([0, 0]).
+            seed (int, optional): Random number generator seed. Defaults to None.
 
+        Returns:
+            torch.Tensor: Rotated coordinates.
         """
         if seed is not None:
             self.generator._set_seed(seed)
@@ -27,6 +33,12 @@ def rotate_coord_augment(self, xy_data, origin=torch.tensor([0, 0]), seed=None):
 def random_coord_unit_square_augment(coords):
     """
     coords: Tensor of shape (B, N, 2) - Batch, Nodes, [x, y]
+
+    Args:
+        coords (torch.Tensor): Nodes coordinates.
+
+    Returns:
+        torch.Tensor: Coordinates under a random symmetry of the unit square.
     """
     B, N, _ = coords.shape
     x, y = coords.split(1, dim=2)
@@ -58,6 +70,15 @@ def augment_coord_by_8_fold(xy_data):
     # xy_data.shape = (batch_s, problem, 2)
 
     # [batch, graph, 2]
+    """
+    Augment coordinates with the 8 symmetric transformations of the unit square.
+
+    Args:
+        xy_data: Coordinates to augment, with shape [..., 2].
+
+    Returns:
+        torch.Tensor: Augmented coordinates, with shape [8 * B, N, 2].
+    """
     x, y = xy_data.split(1, dim=2)
     # x,y shape = (batch, problem, 1)
     dat1 = torch.cat((x, y), dim=2)
@@ -75,11 +96,16 @@ def augment_coord_by_8_fold(xy_data):
 
 def time_shift_augm(self, time_windows, delta = 1, seed=None):
 
-    """Add time shift to TW.
+    """
+    Add time shift to TW.
 
     Args:
-        time_windows: time_windows tensor
+        time_windows: time_windows tensor.
+        delta (int, optional): Time shift to apply. Defaults to 1.
+        seed (int, optional): Random number generator seed. Defaults to None.
 
+    Returns:
+        torch.Tensor: Shifted time windows.
     """
     if seed is not None:
         self.generator._set_seed(seed)

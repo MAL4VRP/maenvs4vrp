@@ -1,3 +1,4 @@
+"""GTI benchmark instance generator for the TOP parallel environment."""
 import torch
 from tensordict import TensorDict
 
@@ -25,6 +26,12 @@ class GTIGenerator(InstanceBuilder):
     """
     @classmethod
     def get_list_of_instances(cls):
+        """
+        Get the available GTI instances, grouped by number of nodes.
+
+        Returns:
+            dict: Mapping from instance set name to the list of available instance files.
+        """
         base_dir = path.dirname(path.dirname(path.abspath(__file__)))
 
         return {'GTI_20': [s.split('.')[0] for s in os.listdir(path.join(base_dir, INSTANCES_PATH, 'GTI')) if '20_L2_' in s],
@@ -38,13 +45,14 @@ class GTIGenerator(InstanceBuilder):
                  batch_size:Optional[torch.Size] = None,
                  seed:Optional[int] = None) -> None:
         """
+        Initialize the instance generator.
 
         Args:
-            instance_name(str, Optional): instance name. Defaults to "GTI"
-            list_of_instances(list, Optional): List of instances file names
-            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
-            batch_size(torch.Size, optional): Batch size. If not specified, defaults to 1.
-            seed (int): random number generator seed. Defaults to None;
+            instance_name (str, optional): instance name. Defaults to "GTI".
+            list_of_instances (list, optional): List of instances file names. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
         """
 
         # seed the generation process
@@ -174,11 +182,12 @@ class GTIGenerator(InstanceBuilder):
     def read_instance_data(self, instance_name:str)-> Dict:
         """
         Reads instance data
+
         Args:
             instance_name (str): instance file name.
 
         Returns:
-            Dict: Instance data
+            Dict: Instance data.
         """
 
         base_dir = path.dirname(path.dirname(path.abspath(__file__)))
@@ -204,9 +213,14 @@ class GTIGenerator(InstanceBuilder):
 
     def get_instance(self, instance_name:str, num_agents:Optional[int] = None) -> Dict:
         """
-        Returns:
-            Dict: Instance data
+        Get an instance, optionally with a custom number of agents.
 
+        Args:
+            instance_name (str): Instance name.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+
+        Returns:
+            Dict: Instance data.
         """
         instance = self.instances_data.get(instance_name)
 
@@ -220,6 +234,12 @@ class GTIGenerator(InstanceBuilder):
         """
         Parse instance data into dict
 
+        Args:
+            instance_data (list): Instance data.
+            instance_name (str): Instance name.
+
+        Returns:
+            Dict: Instance data.
         """
         instance = dict()
         instance['name'] = instance_name
@@ -269,8 +289,7 @@ class GTIGenerator(InstanceBuilder):
         Loads every instance on List_of_instances List
 
         Args:
-            List_of_instances(List, Optional):List of instances file names. Defaults to None.
-
+            list_of_instances (list, optional): List of instances file names. Defaults to None.
         """
         if list_of_instances:
             self.list_of_instances = list_of_instances
@@ -285,7 +304,7 @@ class GTIGenerator(InstanceBuilder):
         Sample one instance from instance list.
 
         Args:
-            seed(int, optional): Random number generator seed. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
 
         Returns:
             str: Instance name.
@@ -311,18 +330,23 @@ class GTIGenerator(InstanceBuilder):
         Samples one instance from instance space
 
         Args:
-            num_agents(int, Optional): Total number of agents. Defaults to 20.
-            num_nodes(int, Optional):  Total number of nodes. Defaults to 100.
-            service_times(float, Optional): Total time of service. Defaults to 0.2.
-            speed(float, Optional): Vehicles' speed. Defaults to None.
-            instance_name(str, Optional):  instance name. Defaults to None;
-            sample_type(str): Sample type. Defaults to "saved".
-            batch_size(torch.Size or None): Batch size. Defaults to None.
-            n_augment(int, optional): Data augmentation. Defaults to None.
-            seed(int): Random number generator seed. Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            service_times (float, optional): Service time in the nodes. Defaults to 0.0.
+            speed (float, optional): Vehicles' speed. Defaults to None.
+            profits (str, optional): Type of profits to use. It can be 'constant', 'uniform' or 'distance'. Defaults to "constant".
+            instance_name (str, optional): instance name. Defaults to None.
+            sample_type (str, optional): Sample type. It can only be "saved" ("random" and "augment" are not implemented). Defaults to "saved".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
 
         Returns:
             Dict: Instance data.
+
+        Raises:
+            ValueError: If ``sample_type`` is not "saved".
+            NotImplementedError: If ``sample_type`` is "random" or "augment".
         """
         if seed is not None:
             self._set_seed(seed)
@@ -359,6 +383,8 @@ class GTIGenerator(InstanceBuilder):
             raise NotImplementedError()
         elif sample_type=='saved':
             instance_info = self.get_instance(instance_name, num_agents=num_agents)
+        else:
+            raise ValueError(f"Unknown sample_type '{sample_type}'. Expected 'saved'.")
 
         return instance_info
 

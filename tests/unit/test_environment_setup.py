@@ -1,8 +1,12 @@
 """
 Tests to verify the Python environment is correctly configured.
 """
+import importlib
 import sys
+
 import pytest
+
+from tests.helpers import AEC_ENVS, PARALLEL_ENVS
 
 
 class TestPythonVersion:
@@ -107,25 +111,12 @@ class TestCriticalDependencies:
 
 
 class TestEnvironmentSamples:
-    """Test that sample environments can be imported."""
+    """Test that every environment package can be imported."""
 
-    @pytest.mark.parametrize("env_name", [
-        "cvrptw",
-        "cvrpstw",
-        "dvrptw",
-        "dsvrptw",
-        "mdvrptw",
-        "pdptw",
-        "sdvrptw",
-        "toptw",
-        "pcvrptw",
-        "mtvrp",
-        "mtdvrp",
-        "gmtvrp",
-        "gmtdvrp",
-    ])
-    def test_environment_module_imports(self, env_name):
+    @pytest.mark.parametrize("group, env_name", [("environments", e) for e in AEC_ENVS]
+                             + [("parallel_environments", e) for e in PARALLEL_ENVS])
+    def test_environment_module_imports(self, group, env_name):
         """Test that each environment module can be imported."""
-        module_name = f"maenvs4vrp.environments.{env_name}"
-        module = __import__(module_name, fromlist=[''])
-        assert module is not None, f"Failed to import {module_name}"
+        for name in ("env", "instances_generator", "observations", "env_agent_reward"):
+            module = importlib.import_module(f"maenvs4vrp.{group}.{env_name}.{name}")
+            assert module is not None

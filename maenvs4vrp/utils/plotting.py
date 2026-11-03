@@ -1,3 +1,4 @@
+"""Plotting utilities for instances and solutions."""
 # Python
 from __future__ import annotations
 from typing import Any, Mapping, Optional, Sequence, Tuple, List, Dict
@@ -25,20 +26,17 @@ def plot_instance_coords(
       1) instance['data']['is_depot'] -> boolean tensor mask (batched or not)
       2) instance['data']['depot_idx'] or instance['depot_idx'] -> int index
       3) fallback: depot index 0
-    
-    Args:
-        instance(Mapping[str, Any]): Mapping with a 'data' key containing 'coords' tensor of shape [B, N, 2] or [N, 2].
-        batch_idx(int): Which batch to plot if coords are batched. Defaults to 0.
-        annotate(bool): Whether to label points with their indices. Defaults to True.
-        title(str, optional): Plot title. Defaults to instance.get("name", "Instance") if None. Defaults to None.
-        figsize(tuple[int, int]): Figure size for matplotlib (used only when ax is None). Defaults to (5, 5).
-        point_size(int or float): Marker size for points. Defaults to 50.
-        show_depot(bool): If True, highlight depot(s). If False, plot all points uniformly. Defaults to True.
-        show_legend(bool): If True, show legend. Defaults to True.
-        ax(object, optional): Optional Matplotlib Axes to draw on. If None, a figure is created and shown. Defaults to None.
 
-    Returns:
-        None.
+    Args:
+        instance (Mapping[str, Any]): Mapping with a 'data' key containing 'coords' tensor of shape [B, N, 2] or [N, 2].
+        batch_idx (int, optional): Which batch to plot if coords are batched. Defaults to 0.
+        annotate (bool, optional): Whether to label points with their indices. Defaults to True.
+        title (str, optional): Plot title. Defaults to instance.get("name", "Instance") if None. Defaults to None.
+        figsize (tuple[int, int], optional): Figure size for matplotlib (used only when ax is None). Defaults to (5, 5).
+        point_size (int | float, optional): Marker size for points. Defaults to 50.
+        show_depot (bool, optional): If True, highlight depot(s). If False, plot all points uniformly. Defaults to True.
+        show_legend (bool, optional): If True, show legend. Defaults to True.
+        ax ('Optional[object]', optional): Optional Matplotlib Axes to draw on. If None, a figure is created and shown. Defaults to None.
     """
     coords = instance["data"]["coords"]
 
@@ -173,32 +171,30 @@ def plot_random_batch_instances(
     Expected input:
         instance: Mapping with key "data" -> "coords" as a torch.Tensor of shape [B, N, 2], where B is batch size, N is number of nodes, and each row is (x, y).
 
-    Parameters
-        n(int): Number of batch items (from B) to plot. Must satisfy 1 <= n <= B.
-        seed(int): Random seed used for the selection without replacement. Defaults to 0.
-        cols(int, optional): Number of columns in the subplot grid. If None, a near-square grid is chosen. Defaults to None.
-        annotate(bool): If True, annotate nodes with their indices. Defaults to True.
-        show_depot(bool): If True, highlight depot node(s) when present. Defaults to True.
-        point_size(int or float): Marker size for node scatter plots. Defaults to 50.
-        figsize_per_plot(Tuple[float, float]): (width, height) for each subplot; total figure size scales by the grid. Defaults to (4.0, 4.0).
-        titles(Sequence[str], optional): Optional sequence of length >= n to use as subplot titles; otherwise defaults to "Batch {idx}" for each selected item. Defaults to None.
-        show(bool): If True, plt.show() is called inside the function. Defaults to True.
-        return_objects(bool): If True, returns (fig, axes_list, selected_indices); if False (default), returns None. Defaults to False.
+    Args:
+        instance (Mapping[str, Any]): Data instance.
+        n (int): Number of batch items (from B) to plot. Must satisfy 1 <= n <= B.
+        seed (int, optional): Random number generator seed. Defaults to 0.
+        cols (int, optional): Number of columns in the subplot grid. If None, a near-square grid is chosen. Defaults to None.
+        annotate (bool, optional): If True, annotate nodes with their indices. Defaults to True.
+        show_depot (bool, optional): If True, highlight depot node(s) when present. Defaults to True.
+        point_size (int | float, optional): Marker size for node scatter plots. Defaults to 50.
+        figsize_per_plot (Tuple[float, float], optional): (width, height) for each subplot; total figure size scales by the grid. Defaults to (4.0, 4.0).
+        titles (Sequence[str], optional): Optional sequence of length >= n to use as subplot titles; otherwise defaults to "Batch {idx}" for each selected item. Defaults to None.
+        show (bool, optional): If True, plt.show() is called inside the function. Defaults to True.
+        return_objects (bool, optional): If True, returns (fig, axes_list, selected_indices); if False (default), returns None. Defaults to False.
 
-    Returns
-        (fig, axes_list, selected_indices) when return_objects=True:
-            * fig: matplotlib.figure.Figure
-            * axes_list: list of Axes for the n plotted items (flattened, length n)
-            * selected_indices: sorted list of the selected batch indices
-        Otherwise returns None.
+    Returns:
+        Tuple['object', 'List[object]', List[int]]: ``(fig, axes_list, selected_indices)`` when.
+            ``return_objects=True``, where ``axes_list`` holds the n plotted axes and ``selected_indices``
+            the sorted selected batch indices. Otherwise None.
 
-    Errors:
-        ValueError if coords is missing, not a 3D torch.Tensor, or has incompatible shape.
-        ValueError if n < 1 or n > B.
+    Raises:
+        ValueError: If coords is missing, is not a 3D torch.Tensor, or has an incompatible shape.
+        ValueError: If n < 1 or n > B.
 
-    Notes
-        The function creates one shared legend for the entire figure when labels are present.
-        Layout is tightened; additional padding is added when a shared legend is drawn.
+    Note:
+        One shared legend is drawn for the entire figure when labels are present.
     """
     coords = instance["data"]["coords"]
     if not (isinstance(coords, torch.Tensor) and coords.dim() == 3):
@@ -297,6 +293,20 @@ def plot_env_instance_coords(env: AECEnv,
                       ax: "Optional[object]" = None,
                       # Matplotlib Axes, kept as object to avoid hard import at module scope
                       ) -> None:
+    """
+    Plot the node coordinates of the environment current instance.
+
+    Args:
+        env (AECEnv): Environment.
+        batch_idx (int, optional): Which batch to plot if coords are batched. Defaults to 0.
+        annotate (bool, optional): If True, annotate nodes with their indices. Defaults to True.
+        title (str, optional): Plot title. Defaults to instance.get("name", "Instance") if None. Defaults to None.
+        figsize (tuple[int, int], optional): Figure size for matplotlib (used only when ax is None). Defaults to (5, 5).
+        point_size (int | float, optional): Marker size for points. Defaults to 50.
+        show_depot (bool, optional): If True, highlight depot node(s) when present. Defaults to True.
+        show_legend (bool, optional): If True, show legend. Defaults to True.
+        ax ('Optional[object]', optional): Optional Matplotlib Axes to draw on. If None, a figure is created and shown. Defaults to None.
+    """
     instance = env._get_current_instance_data()
     plot_instance_coords(instance=instance,
                          batch_idx=batch_idx,
@@ -329,20 +339,20 @@ def plot_env_random_batch_instances(
     active instance data from env._get_current_instance_data().
 
     Args:
-        env(AECEnv): Environment providing the current batched instance.
-        n(int): Number of batch items to plot (1 <= n <= batch size).
-        seed(int): Seed for reproducible selection without replacement. Defaults to 0.
-        cols(int, optional): Columns in the subplot grid. If None, a near-square layout is chosen. Defaults to None.
-        annotate(bool): If True, annotate nodes with their indices. Defaults to True.
-        show_depot(bool): If True, highlight depot node(s) when present. Defaults to True.
-        point_size(int or float): Marker size for nodes. Defaults to 50.
-        figsize_per_plot(Tuple[float, float]): (width, height) for each subplot. Defaults to (4.0, 4.0).
-        titles(Sequence[str]): Optional titles per subplot; falls back to "Batch {idx}". Defaults to None.
-        show(bool): If True, calls plt.show() inside the function. Default to True.
-        return_objects(bool): If True, returns (fig, axes_list, selected_indices); if False (default), returns None. Defaults to False.
+        env (AECEnv): Environment providing the current batched instance.
+        n (int): Number of batch items to plot (1 <= n <= batch size).
+        seed (int, optional): Random number generator seed. Defaults to 0.
+        cols (int, optional): Columns in the subplot grid. If None, a near-square layout is chosen. Defaults to None.
+        annotate (bool, optional): If True, annotate nodes with their indices. Defaults to True.
+        show_depot (bool, optional): If True, highlight depot node(s) when present. Defaults to True.
+        point_size (int | float, optional): Marker size for nodes. Defaults to 50.
+        figsize_per_plot (Tuple[float, float], optional): (width, height) for each subplot. Defaults to (4.0, 4.0).
+        titles (Sequence[str], optional): Optional titles per subplot; falls back to "Batch {idx}". Defaults to None.
+        show (bool, optional): If True, calls plt.show() inside the function. Defaults to True.
+        return_objects (bool, optional): If True, returns (fig, axes_list, selected_indices); if False (default), returns None. Defaults to False.
 
     Returns:
-        (fig, axes_list, selected_indices) when return_objects=True; otherwise None.
+        Tuple['object', 'List[object]', List[int]]: (fig, axes_list, selected_indices) when return_objects=True; otherwise None.
     """
     instance = env._get_current_instance_data()
     return plot_random_batch_instances(
@@ -380,21 +390,18 @@ def plot_solution_overlay(
     Draw solution routes on top of an existing scatter plot of nodes.
 
     Args:
-        ax(plt.Axes): Axes where solution will be drawn.
-        coords(torch.Tensor): Coords with format [N, 2]. N nodes have 2 coordinates.
-        solution(Dict[str, Any]): Output of get_solution.
-        colors(List[str], optional): Color list for agents routes.
-        linewidth(float): Width of drawn lines. Defaults to 1.5.
-        alpha(float): Lines opacity. 0 is invisible and 1 is opaque. Defaults to 0.9.
-        show_depot(bool): If True, it draws the depot. Defaults to True.
-        depot_kwargs(Dict[str, Any], optional): Additional args for depot scatter. Defaults to None.
-        arrows(bool): If True, routes are arrows. If False, routes are lines. Defaults to False.
-        arrowstyle(str): Arrows style when arrows=True. Defaults to '-|>'.
-        mutation_scale(float): Arrows scale when arrows=True. Defaults to 12.0.
-        arrow_every(int): How often arrows are drawn. If 1, draws arrows in every line. If 2, draws arrows in every other line. etc. Defaults to 1.
-
-    Returns:
-        None.
+        ax (plt.Axes): Axes where solution will be drawn.
+        coords (torch.Tensor): Coords with format [N, 2]. N nodes have 2 coordinates.
+        solution (Dict[str, Any]): Output of get_solution.
+        colors (List[str], optional): Color list for agents routes. Defaults to None.
+        linewidth (float, optional): Width of drawn lines. Defaults to 1.5.
+        alpha (float, optional): Lines opacity. 0 is invisible and 1 is opaque. Defaults to 0.9.
+        show_depot (bool, optional): If True, it draws the depot. Defaults to True.
+        depot_kwargs (Dict[str, Any], optional): Additional args for depot scatter. Defaults to None.
+        arrows (bool, optional): If True, routes are arrows. If False, routes are lines. Defaults to False.
+        arrowstyle (str, optional): Arrows style when arrows=True. Defaults to ``"-|>"``.
+        mutation_scale (float, optional): Arrows scale when arrows=True. Defaults to 12.0.
+        arrow_every (int, optional): How often arrows are drawn. If 1, draws arrows in every line. If 2, draws arrows in every other line. etc. Defaults to 1.
     """
     xy = coords.detach().cpu().numpy()
     depot = solution["depot"]
@@ -463,22 +470,21 @@ def plot_solution(env, batch_idx: int, annotate: bool = True, include_depot_edge
         A single axes view of all depots and routes (default), or
         One subplot per depot (when per_depot_subplots=True and multiple depots exist).
 
-    Parameters
-        env: Environment containing td_state and solution information.
-        batch_idx(int): Index of the batch item to visualize.
-        annotate(bool): If True, annotates nodes with their indices. Defaults to True.
-        include_depot_edges(bool): If False, edges incident to depot nodes are omitted from overlay. Defaults to True.
-        per_depot_subplots(bool): If True and multiple depots exist, creates a grid with one subplot per depot. Defaults to False.
-        cols(int or None): Number of columns for the per-depot subplot grid (if None, a near-square layout is chosen). Defaults to None.
-        figsize_per_subplot(tuple[float, float]): (width, height) size used for each subplot when per_depot_subplots=True. Defaults to (6.0, 6.0).
-
-    Behavior
-        If the solution is missing, a minimal empty solution is synthesized defensively.
-        Axis limits, equal aspect, grid, and titles are set for readability.
-        Legends are placed below axes (for per-depot subplots) or as a shared figure legend (single-axes case).
-
-    Returns
-        None. The function produces the plot and calls plt.show().
+    Args:
+        env (AECEnv): Environment containing td_state and solution information.
+            batch_idx(int): Index of the batch item to visualize.
+            annotate(bool): If True, annotates nodes with their indices. Defaults to True.
+            include_depot_edges(bool): If False, edges incident to depot nodes are omitted from overlay. Defaults to True.
+            per_depot_subplots(bool): If True and multiple depots exist, creates a grid with one subplot per depot. Defaults to False.
+            cols(int or None): Number of columns for the per-depot subplot grid (if None, a near-square layout is chosen). Defaults to None.
+            figsize_per_subplot(tuple[float, float]): (width, height) size used for each subplot when per_depot_subplots=True. Defaults to (6.0, 6.0).
+            Behavior
+        batch_idx (int): Which batch to plot if coords are batched.
+        annotate (bool, optional): If True, annotate nodes with their indices. Defaults to True.
+        include_depot_edges (bool, optional): If True, draw the edges from and to the depot. Defaults to True.
+        per_depot_subplots (bool, optional): If True, draw one subplot per depot. Defaults to False.
+        cols (int, optional): Number of columns in the subplot grid. If None, a near-square grid is chosen. Defaults to None.
+        figsize_per_subplot (tuple[float, float], optional): Figure size of each subplot. Defaults to (6.0, 6.0).
     """
     coords: torch.Tensor = env.td_state[batch_idx]["coords"]
     solution = get_solution(env, batch_idx=batch_idx, include_depot=True, drop_empty_tours=True)

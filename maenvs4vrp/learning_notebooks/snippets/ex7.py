@@ -1,6 +1,6 @@
 class Environment(Environment):
 
-    def _update_feasibility(self):
+    def _update_curr_agent_feasibility(self):
 
         _mask = self.td_state['nodes']['active_nodes_mask'].clone() * self.td_state['cur_agent']['action_mask'].clone()
 

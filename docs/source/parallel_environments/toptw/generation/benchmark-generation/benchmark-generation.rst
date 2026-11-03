@@ -1,8 +1,8 @@
 .. _TOPTW_PAR-generation-benchmark-generation:
 
-============================
+=============================
 Benchmark Instance Generation
-============================
+=============================
 
 .. autoclass:: maenvs4vrp.parallel_environments.toptw.benchmark_instances_generator.BenchmarkInstanceGenerator
     :members:

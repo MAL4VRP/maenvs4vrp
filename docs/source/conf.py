@@ -1,13 +1,23 @@
+import glob
 import os
+import shutil
 import sys
-import subprocess
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(os.path.abspath(__file__)))))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-sys.path.append(BASE_DIR)  # append the path to system
+# Document the code in this repository, not an installed copy of the package
+sys.path.insert(0, BASE_DIR)
 
-#sys.path.insert(0,os.path.abspath('........'))
-#sys.path.append(os.path.abspath('../..'))
+# The tutorial notebooks live in maenvs4vrp/learning_notebooks (single source of truth);
+# copy them into the docs source tree at build time.
+NOTEBOOKS_SRC = os.path.join(BASE_DIR, 'maenvs4vrp', 'learning_notebooks')
+NOTEBOOKS_DST = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'notebooks')
+os.makedirs(NOTEBOOKS_DST, exist_ok=True)
+for notebook in glob.glob(os.path.join(NOTEBOOKS_SRC, '*.ipynb')):
+    target = os.path.join(NOTEBOOKS_DST, os.path.basename(notebook))
+    if os.path.exists(target) and os.path.samefile(notebook, target):
+        continue  # already linked to the source notebook
+    shutil.copy2(notebook, target)
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -15,7 +25,7 @@ sys.path.append(BASE_DIR)  # append the path to system
 project = 'maenvs4vrp'
 copyright = '2026, maenvs4vrp'
 author = 'maenvs4vrp'
-release = '0.3.0'
+release = '0.3.1'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -30,18 +40,10 @@ extensions = [
     'sphinx_math_dollar',
     'sphinx.ext.mathjax',
     'sphinx.ext.intersphinx',
-    'nbsphinx',
     'sphinx_copybutton']
 
 nbsphinx_allow_errors = True
 nbsphinx_execute = 'never'
-
-mathjax_config = {
-    'tex2jax': {
-        'inlineMath': [ ["\\(","\\)"] ],
-        'displayMath': [["\\[","\\]"] ],
-    },
-}
 
 mathjax3_config = {
   "tex": {
@@ -63,9 +65,7 @@ templates_path = ['_templates']
 #
 # source_suffix = ['.rst', '.md']
 source_suffix = {
-    '.md': 'markdown',
     '.rst': 'restructuredtext',
-    '.txt': 'restructuredtext',
 }
 
 # The encoding of source files.
@@ -75,7 +75,7 @@ source_suffix = {
 # The master toctree document.
 master_doc = 'index'
 
-exclude_patterns = []
+exclude_patterns = ['notebooks/.ipynb_checkpoints']
 
 pygments_style = 'sphinx'
 
@@ -89,7 +89,3 @@ pygments_style = 'sphinx'
 html_theme = 'furo'
 
 html_static_path = ['_static']
-
-html_css_files = [
-    'custom.css',
-]

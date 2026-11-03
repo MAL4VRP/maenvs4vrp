@@ -6,7 +6,7 @@ PCVRPTW
 
 Prize-Collecting Vehicle Routing Problem with Time Windows (PCVRPTW)
 
-This version of the CVRPTW does not require visiting all clients. Instead, each client has a prize that is collected upon visitation.
+This version of the CVRPTW does not require visiting all clients. Instead, each client has a prize that is collected upon visitation (see, e.g., [Bal89]_).
 The objective is to minimize the total combined traveled time of all vehicle routes while maximizing the collected prizes.
 
 Here's everything about PCVRPTW environment:

@@ -1,3 +1,4 @@
+"""General helper functions (solution extraction, data comparison, distances)."""
 import torch
 from tensordict import TensorDict
 from torch import Tensor
@@ -5,15 +6,16 @@ from typing import Any, Optional, Tuple, List, Dict
 
 def data_equivalence(data_1, data_2, exact: bool = False) -> bool:
     # adapted from https://gymnasium.farama.org/main/_modules/gymnasium/utils/env_checker/
-    """Assert equality between data 1 and 2, i.e observations, actions, info.
+    """
+    Assert equality between data 1 and 2, i.e observations, actions, info.
 
     Args:
-        data_1: Data structure 1
-        data_2: Data structure 2
-        exact: Whether to compare array exactly or not if false compares with absolute and realive torrelance of 1e-5 (for more information check [np.allclose](https://numpy.org/doc/stable/reference/generated/numpy.allclose.html)).
+        data_1: Data structure 1.
+        data_2: Data structure 2.
+        exact (bool, optional): Whether to compare array exactly or not if false compares with absolute and realive torrelance of 1e-5 (for more information check [np.allclose](https://numpy.org/doc/stable/reference/generated/numpy.allclose.html)). Defaults to False.
 
     Returns:
-        If observation 1 and 2 are equivalent
+        bool: If observation 1 and 2 are equivalent.
     """
     if type(data_1) is not type(data_2):
         return False
@@ -55,6 +57,15 @@ def get_solution(
     Adds:
       - agent_depot: {agent_id: depot_node_idx or None}
       - depot_agents: {depot_node_idx: [agent_ids]}
+
+    Args:
+        env (Any): Environment with a finished (or ongoing) episode.
+        batch_idx (int, optional): Batch element to extract. If None, all batch elements are returned. Defaults to None.
+        include_depot (bool, optional): If True, include depot visits in the tours. Defaults to True.
+        drop_empty_tours (bool, optional): If True, drop tours without customer visits. Defaults to True.
+
+    Returns:
+        Dict[str, Any] | List[Dict[str, Any]]: Solution of the selected batch element, or one solution per batch element.
     """
     assert hasattr(env, "td_state"), "Environment has no td_state. Did you call env.reset()?"
     td = env.td_state

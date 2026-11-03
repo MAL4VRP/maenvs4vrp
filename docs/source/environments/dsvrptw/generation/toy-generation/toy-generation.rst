@@ -1,4 +1,4 @@
-.. _CVRPTW-generation-toy-generation:
+.. _DSVRPTW-generation-toy-generation:
 
 =========================
 Toy Instance Generation 
@@ -11,6 +11,6 @@ Toy instance generation settings are defined in file ``toy_instance_generator.py
 ToyInstanceGenerator 
 --------------------
 
-.. autoclass:: maenvs4vrp.environments.cvrptw.toy_instance_generator.ToyInstanceGenerator
+.. autoclass:: maenvs4vrp.environments.dsvrptw.toy_instance_generator.ToyInstanceGenerator
     :members:
     :special-members: __init__

@@ -127,7 +127,7 @@ Built-in neural network baselines ready to train on any parallel environment.
      - `Code <https://github.com/MAEnvs4VRP/maenvs4vrp/tree/master/maenvs4vrp/neuro_solvers/attention_model>`__
      - `Docs <https://maenvs4vrp.readthedocs.io/en/latest/neuro_solvers/attention_model/attention_model.html>`__
    * - 2D-Ptr (REINFORCE)
-     - `Code <https://github.com/MAEnvs4VRP/maenvs4vrp/tree/master/maenvs4vrp/neuro_solvers/2d_ptr>`__
+     - `Code <https://github.com/MAEnvs4VRP/maenvs4vrp/tree/master/maenvs4vrp/neuro_solvers/two_d_ptr>`__
      - `Docs <https://maenvs4vrp.readthedocs.io/en/latest/neuro_solvers/two_d_ptr/two_d_ptr.html>`__
 
 Install
@@ -215,19 +215,19 @@ We've prepared five hands-on notebooks that walk you through the library's diffe
    * - Notebook
      - Description
      - Colab
-   * - `01: Quickstart <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/1.0.0_quickstart_cvrptw.html>`_
+   * - `01: Quickstart <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/1.0.0_quickstart_cvrptw.html>`_
      - Learning MAEnvs4VRP basic usage.
      - |colab-quickstart|
-   * - `02: MAEnvs4VRP library <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/2.0.0_maenvs4vrp_exploration_and_challenges.html>`_
+   * - `02: MAEnvs4VRP library <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/2.0.0_maenvs4vrp_exploration_and_challenges.html>`_
      - Exploring MAEnvs4VRP library with challenges.
      - |colab-challenges|
-   * - `03: Multi-Tasking Environments <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/3.0.0_multitask_environments.html>`_
+   * - `03: Multi-Tasking Environments <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/3.0.0_multitask_environments.html>`_
      - Exploring MAEnvs4VRP multi-tasking environments.
      - |colab-multitask|
-   * - `04: Stochastic Environments <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/4.0.0_maenvs4vrp_stochastic_environments.html>`_
+   * - `04: Stochastic Environments <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/4.0.0_maenvs4vrp_stochastic_environments.html>`_
      - Adapting MAEnvs4VRP deterministic environments into stochastic ones.
      - |colab-stochastic|
-   * - `05: PyVRP <https://maenvs4vrp.readthedocs.io/en/latest/learning_notebooks/5.0.0_PyVRP_cvrptw_solver.html>`_
+   * - `05: PyVRP <https://maenvs4vrp.readthedocs.io/en/latest/notebooks/5.0.0_PyVRP_cvrptw_solver.html>`_
      - Exploring PyVRP on MAEnvs4VRP instances and environments.
      - |colab-PyVRP|
 
@@ -346,7 +346,7 @@ To credit the library in your publications, use this citation:
 .. code-block:: bibtex
 
     @article{gama2026maenvs4vrp,
-      title={Multi-Agent Environments for Vehicle Routing Problems},
+      title={Multiagent Environments for Vehicle Routing Problems},
       author={Ricardo Gama and Ricardo Cunha and Daniel Fuertes and Carlos R. del-Blanco and Hugo L. Fernandes},
       year={2026},
       journal={INFORMS Journal on Computing},
@@ -360,10 +360,10 @@ Contributing
 We welcome contributions to **MAEnvs4VRP**!
 If you'd like to use this library in your academic research/industry projects, or if you have suggestions, feature requests, or any feedback, we'd be happy to hear from you.
 
-Feel free to `open an issue <https://github.com/MAEnvs4VRP/maenvs4vrp/issues>`_ or submit a `pull request <https://github.com/MAEnvs4VRP/maenvs4vrp/pulls>`_. If you would like to contribute, please check out our contribution guidelines `here <https://github.com/MAEnvs4VRP/maenvs4vrp/blob/pre_commit_setup/.github/CONTRIBUTING.rst>`_. We welcome and look forward to all contributions to MAEnvs4vrp
+Feel free to `open an issue <https://github.com/MAEnvs4VRP/maenvs4vrp/issues>`_ or submit a `pull request <https://github.com/MAEnvs4VRP/maenvs4vrp/pulls>`_. If you would like to contribute, please follow the project conventions described in `AGENTS.md <https://github.com/MAEnvs4VRP/maenvs4vrp/blob/master/AGENTS.md>`_. We welcome and look forward to all contributions to MAEnvs4vrp
 
 
 Acknowledgements
 =================
-MAEnvs4VRP has been inspired by, and benefits from, the ideas and tooling of the broader open-source community. In particular, we would like to thank `PettingZoo <https://www.pettingzoo.ml/>`_,
+MAEnvs4VRP has been inspired by, and benefits from, the ideas and tooling of the broader open-source community. In particular, we would like to thank `PettingZoo <https://pettingzoo.farama.org/>`_,
 `Flatland <https://github.com/flatland-association/flatland-rl/>`_, `MARDAM <https://gitlab.inria.fr/gbono/mardam>`_, `RL4CO <https://rl4co.readthedocs.io/en/latest//>`_, `RoutFinder <https://github.com/ai4co/routefinder/tree/main//>`_, `PyVRP <https://pyvrp.org//>`_ .

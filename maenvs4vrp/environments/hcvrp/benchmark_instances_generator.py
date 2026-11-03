@@ -1,7 +1,9 @@
+"""Benchmark instance generator for the HCVRP environment."""
 import os
 from os import path
 import shutil
 import logging
+import warnings
 import torch
 import numpy as np
 from tensordict import TensorDict
@@ -28,19 +30,21 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         """
         Get list of possible instances from benchmark files.
 
-        Args:
-            n/a.
-
         Returns:
-            None.
+            dict: Keys 'instances'; values are lists of instance
+                  name strings, or empty lists when data is not available locally.
         """
 
-        cls.download_and_copy_instances()
+        try:
+            cls.download_and_copy_instances()
+        except Exception as e:  # offline or Hugging Face unreachable: list what is available locally
+            warnings.warn(f"Benchmark instances could not be downloaded ({type(e).__name__}); "
+                          "only the instances available locally are listed.", RuntimeWarning)
 
         base_dir = path.dirname(path.dirname(path.abspath(__file__)))
         full_dir = path.join(base_dir, BENCHMARK_INSTANCES_PATH)
 
-        files = [f for f in os.listdir(full_dir) if f.endswith(".npz")]
+        files = [f for f in os.listdir(full_dir) if f.endswith(".npz")] if path.isdir(full_dir) else []
 
         return {
             "instances": [
@@ -53,12 +57,6 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
     def download_and_copy_instances(cls):
         """
         Download benchmark instances from HuggingFace if they are not locally present.
-
-        Args:
-            n/a.
-
-        Returns:
-            None.
         """
 
         base_dir = path.dirname(path.dirname(path.abspath(__file__)))
@@ -119,8 +117,8 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Initialize the BenchmarkInstanceGenerator.
 
         Args:
-            num_agents (int, optional): Number of vehicles/agents. Defaults to None.
-            num_nodes (int, optional): Total number of nodes (including depot). Defaults to None.
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
             min_nodes (float, optional): Minimum coordinate value for node locations. Defaults to None.
             max_nodes (float, optional): Maximum coordinate value for node locations. Defaults to None.
             min_demand (int, optional): Minimum customer demand. Defaults to None.
@@ -129,14 +127,11 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
             max_capacity (float, optional): Maximum vehicle capacity. Defaults to None.
             min_speed (float, optional): Minimum vehicle speed. Defaults to None.
             max_speed (float, optional): Maximum vehicle speed. Defaults to None.
-            instance_name (str, optional): Name of a specific instance to load. Defaults to None.
-            list_of_instances (list[str], optional): List of instance identifiers to load
-                (for example, 'hcvrp/data/benchmark/instance_name'). If provided,
-                `load_set_of_instances()` will be called. Defaults to None.
-            device (str, optional): PyTorch device string ('cpu' or 'cuda'). Defaults to 'cpu'.
-            batch_size (int, optional): Number of examples per batch used when creating TensorDicts. Defaults to 1.
-            seed (int, optional): Random seed for reproducibility. If None, `DEFAULT_SEED` will be used.
-
+            instance_name (str, optional): Instance set name. It can only be "instances" (every benchmark instance); ignored when ``list_of_instances`` is given. Defaults to None.
+            list_of_instances (Set[str], optional): List of instances file names. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            batch_size (int, optional): Batch size. Defaults to 1.
+            seed (int, optional): Random number generator seed. Defaults to None.
         """
 
 
@@ -214,10 +209,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Load every instance on list_of_instances list.
 
         Args:
-            list_of_instances(list): List of instances file names. Defaults to None.
-
-        Returns:
-            None.
+            list_of_instances (list, optional): List of instances file names. Defaults to None.
         """
 
         if list_of_instances:
@@ -234,7 +226,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Read instance data from file. Benchmark's instance keys are translated into our keys.
 
         Args:
-            instance_name(str): Instance path.
+            instance_name (str): Instance path.
 
         Returns:
             Dict: Instance data.
@@ -284,12 +276,10 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Get an instance with custom number of agents.
 
         Args:
-            instance_name(str): Instance file name.
-            num_agents(int): Number of agents. Defaults to None.
+            instance_name (str): Instance file name.
 
         Returns:
             Dict: Instance data.
-
         """
 
         if not hasattr(self, "instances_data"):
@@ -311,22 +301,12 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Generate a random HCVRP instance with specified parameters.
 
         Args:
-            batch_size (torch.Size, optional): Batch size for the instance. Defaults to None.
-            seed (int, optional): Random seed for reproducibility. Defaults to None.
-            device (str, optional): Computation device ('cpu' or 'cuda'). Defaults to 'cpu'.
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
-            Dict: Dictionary containing:
-                - 'name' (str): Instance name.
-                - 'num_nodes' (int): Number of nodes in the instance.
-                - 'num_agents' (int): Number of vehicles/agents.
-                - 'data' (TensorDict): TensorDict containing:
-                    - 'coords': Node coordinates with depot at index 0.
-                    - 'demand': Demand at each node (0 at depot).
-                    - 'capacity': Capacity for each vehicle.
-                    - 'speed': Speed for each vehicle.
-                    - 'depot': Index of the depot node (always 0).
-                    - 'is_depot': Boolean mask indicating depot nodes.
+            Dict: Instance data.
         """
 
         if seed is not None:
@@ -378,10 +358,10 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Sample one instance from instance list.
 
         Args:
-            seed(int): Random number generator seed. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
 
         Returns:
-            str: Instance sample name.
+            str: Instance name.
         """
         if seed is not None:
             self._set_seed(seed)
@@ -415,42 +395,28 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         instance previously loaded into the generator's `instances_data`.
 
         Args:
-            num_agents (int, optional): Number of vehicles/agents. If None,
-                a default value is used.
-            num_nodes (int, optional): Number of nodes including the depot.
-                If None, a default value is used.
-            min_nodes (float, optional): Minimum coordinate value for locations.
-            max_nodes (float, optional): Maximum coordinate value for locations.
-            min_demand (int, optional): Minimum customer demand (inclusive).
-            max_demand (int, optional): Maximum customer demand (exclusive).
-            min_capacity (float, optional): Minimum vehicle capacity.
-            max_capacity (float, optional): Maximum vehicle capacity.
-            min_speed (float, optional): Minimum vehicle speed.
-            max_speed (float, optional): Maximum vehicle speed.
-            instance_name (str, optional): Name of a saved instance to load.
-                If `None`, one is sampled from the generator's set.
-            sample_type (str, optional): Either `'random'` to synthesize a new
-                instance or `'saved'` to return a stored instance. Defaults to
-                `'random'`.
-            batch_size (int or torch.Size, optional): If provided, overrides
-                the generator's batch size for the produced TensorDicts.
-            seed (int, optional): Random seed for reproducibility.
-            n_augment (int, optional): Number of augmentations to apply
-                (currently unused by this method).
-            device (str, optional): Device string for tensors (e.g. `'cpu'` or
-                `'cuda'`).
+            num_agents (int, optional): Total number of agents. Defaults to None.
+            num_nodes (int, optional): Total number of nodes. Defaults to None.
+            min_nodes (float, optional): Minimum coordinate value for locations. Defaults to None.
+            max_nodes (float, optional): Maximum coordinate value for locations. Defaults to None.
+            min_demand (int, optional): Minimum customer demand (inclusive). Defaults to None.
+            max_demand (int, optional): Maximum customer demand (exclusive). Defaults to None.
+            min_capacity (float, optional): Minimum vehicle capacity. Defaults to None.
+            max_capacity (float, optional): Maximum vehicle capacity. Defaults to None.
+            min_speed (float, optional): Minimum vehicle speed. Defaults to None.
+            max_speed (float, optional): Maximum vehicle speed. Defaults to None.
+            instance_name (str, optional): Instance name. Defaults to None.
+            sample_type (str, optional): Sample type. It can be "random" or "saved". Defaults to "random".
+            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            seed (int, optional): Random number generator seed. Defaults to None.
+            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
+            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
 
         Returns:
-            Dict: A dictionary containing:
-                - `'name'` (str): Instance identifier.
-                - `'num_nodes'` (int): Number of nodes in the instance.
-                - `'num_agents'` (int): Number of vehicles/agents.
-                - `'data'` (TensorDict): Batched TensorDict with keys
-                  `'coords'`, `'demand'`, `'capacity'`, `'speed'`, and
-                  `'is_depot'`.
+            Dict: Instance data.
 
         Raises:
-            ValueError: If `sample_type` is not `'random'` or `'saved'`.
+            ValueError: If ``sample_type`` is not "random" or "saved".
         """
 
         if seed is not None:
@@ -493,7 +459,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         if max_speed is not None:
             self.max_speed = max_speed
 
-        if batch_size is not None:
+        if batch_size is None:
             batch_size = [1]
         else:
             batch_size = [batch_size] if isinstance(batch_size, int) else batch_size
@@ -513,6 +479,6 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
             instance = self.get_instance(instance_name, num_agents=num_agents)
 
         else:
-            raise ValueError("sample_type deve ser 'random' ou 'saved'")
+            raise ValueError(f"Unknown sample_type '{sample_type}'. Expected 'random' or 'saved'.")
 
         return instance
