@@ -1,4 +1,3 @@
-"""Base class for Agent-Environment-Cycle (AEC) environments."""
 from maenvs4vrp.core.env_generator_builder import InstanceBuilder
 from maenvs4vrp.core.env_observation_builder import ObservationBuilder
 from maenvs4vrp.core.env_agent_selector import BaseSelector
@@ -28,16 +27,17 @@ class AECEnv():
             batch_size: Optional[torch.Size] = None,
             ):
         """
-        Initialize the AECEnv.
+        Constructor
 
         Args:
-            instance_generator_object (InstanceBuilder): Generator instance.
-            obs_builder_object (ObservationBuilder): Observations instance.
-            agent_selector_object (BaseSelector): Agent selector instance.
-            reward_evaluator (RewardFn): Reward evaluator instance.
-            seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to None.
-            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            instance_generator_object(InstanceBuilder): Generator instance.
+            obs_builder_object(ObservationBuilder): Observations instance.
+            agent_selector_object(BaseSelector): Agent selector instance
+            reward_evaluator(RewardFn): Reward evaluator instance.
+            seed(int): Random number generator seed. Defaults to None.
+            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to None.
+            batch_size(torch.Size): Batch size. Defaults to None.
+
         """
 
         if seed is None:
@@ -82,7 +82,10 @@ class AECEnv():
         Set the random seed used by the environment.
 
         Args:
-            seed (int): Random number generator seed.
+            seed(int, optional): Seed used.
+
+        Returns:
+            None.
         """
         self.seed = seed
         # 1. Python built-in random module
@@ -100,8 +103,11 @@ class AECEnv():
         Compute the environment.
 
         Args:
-            obs_list (list, optional): List of observations to include. Defaults to None.
-            update_all (bool, optional): If True, update all agents' observations. Defaults to False.
+            obs_list(list, optional): List of observations to include. Defaults to None.
+            update_all(bool, optional): If True, update all agents' observations. Defaults to False.
+
+        Returns
+            TensorDict: Current agent observaions and masks dictionary.
         """
         raise NotImplementedError()
 
@@ -111,7 +117,10 @@ class AECEnv():
         Compute a random action from avaliable actions to current agent.
 
         Args:
-            td (TensorDict): Environment tensor instance.
+            td(TensorDict): Environment instance tensor.
+
+        Returns:
+            TensorDict: Tensor environment instance with updated action.
         """
         raise NotImplementedError()
 
@@ -120,7 +129,10 @@ class AECEnv():
         Sample both agent and action simultaneously from the joint feasible space.
 
         Args:
-            td (TensorDict): Environment tensor instance.
+            td(TensorDict): Environment instance tensor.
+
+        Returns:
+            TensorDict: Tensor environment instance with updated agent and action.
         """
         raise NotImplementedError()
 
@@ -129,8 +141,11 @@ class AECEnv():
         Sample a random agent from the available agents in the environment.
 
         Args:
-            td (TensorDict): Environment tensor instance.
-            agent_given_action (bool, optional): If True, sample an agent given the action. Defaults to False.
+            td(TensorDict): Environment instance tensor.
+            agent_given_action(bool, optional): If True, sample an agent given the action. Defaults to False.
+
+        Returns:
+            TensorDict: Tensor environment instance with updated agent.
         """
         raise NotImplementedError()
 
@@ -138,24 +153,39 @@ class AECEnv():
     def reset(self) -> TensorDict:
         """
         Reset the environment to a starting state and return infos dict.
+
+        Args:
+            n/a.
+
+        Returns:
+            TensorDict: Environment information.
         """
         raise NotImplementedError()
 
     def reset_agent_select(self) -> TensorDict:
         """
         Resets the environment and sets the current agent.
+
+        Returns:
+            TensorDict: Updated environment instance tensor.
         """
         raise NotImplementedError()
 
     def reset_observe(self) -> TensorDict:
         """
         Resets and observe the environment.
+
+        Returns:
+            TensorDict: Updated environment instance tensor.
         """
         raise NotImplementedError()
 
     def reset_agent_select_observe(self) -> TensorDict:
         """
         Resets the environment, sets the current agent and makes observations.
+
+        Returns:
+            TensorDict: Updated environment instance tensor.
         """
         raise NotImplementedError()
 
@@ -176,7 +206,11 @@ class AECEnv():
         Perform an environment step for active agent.
 
         Args:
-            td (TensorDict): Environment tensor instance.
+            td(TensorDict): Environment tensor instance.
+
+        Returns:
+            TensorDict: Updated tensor environment instance.
+
         """
         raise NotImplementedError()
 
@@ -187,8 +221,11 @@ class AECEnv():
         Perform an environment step for active agent.
 
         Args:
-            td (TensorDict): Environment tensor instance.
-            obs_list (List[str], optional): List of observations to include. Defaults to ['all_agents_action_mask'].
+            td(TensorDict): Environment tensor instance.
+            obs_list (Optional[List[str]]): List of observation keys to include. Defaults to ['all_agents_action_mask'].
+
+        Returns:
+            td(TensorDict): Updated environment tensor instance.
         """
         raise NotImplementedError()
 
@@ -198,7 +235,10 @@ class AECEnv():
         Perform an environment step for active agent.
 
         Args:
-            td (TensorDict): Environment tensor instance.
+            td(TensorDict): Environment tensor instance.
+
+        Returns:
+            td(TensorDict): Updated environment tensor instance.
         """
         raise NotImplementedError()
 
@@ -209,14 +249,22 @@ class AECEnv():
         Perform an environment step for active agent.
 
         Args:
-            td (TensorDict): Environment tensor instance.
-            obs_list (List[str]): List of observations to include.
+            td(TensorDict): Environment tensor instance.
+
+        Returns:
+            td(TensorDict): Updated environment tensor instance.
         """
         raise NotImplementedError()
 
     def check_solution_validity(self):
         """
         Check if solution is valid according to problem constraints.
+
+        Args:
+            N/a.
+
+        Returns:
+            None. Raises AssertionError if invalid.
         """
         raise NotImplementedError()
 

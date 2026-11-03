@@ -1,4 +1,3 @@
-"""PCVRP parallel environment."""
 import torch
 from tensordict import TensorDict
 
@@ -21,21 +20,18 @@ class Environment(PEnv):
                 reward_evaluator: RewardFn,
                 seed=None,
                 device: Optional[str] = None,
-                batch_size: Optional[torch.Size] = None,
-                check_actions: bool = True):
+                batch_size: Optional[torch.Size] = None):
         """
-        Initialize the environment.
+        Constructor.
 
         Args:
-            instance_generator_object (InstanceBuilder): Generator instance.
-            obs_builder_object (ObservationBuilder): Observations instance.
-            reward_evaluator (RewardFn): Reward evaluator instance.
-            seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to None.
-            batch_size (torch.Size, optional): Batch size. Defaults to None.
-            check_actions (bool, optional): If True, check at every step that the selected agent and action are feasible (on GPU this waits for the device). Defaults to True.
+            instance_generator_object(InstanceBuilder): Generator instance.
+            obs_builder_object(ObservationBuilder): Observations instance.
+            reward_evaluator(RewardFn): Reward evaluator instance.
+            seed(int): Random number generator seed. Defaults to None.
+            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to None.
+            batch_size(torch.Size): Batch size. Defaults to None.
         """
-        self.check_actions = check_actions
 
         self.version = 'v0'
         self.env_name = 'pcvrp'
@@ -75,11 +71,11 @@ class Environment(PEnv):
         Retrieve agent environment observations.
 
         Args:
-            td (TensorDict): Environment tensor instance.
-            obs_list (list, optional): List of observations to include. Defaults to None.
+            td(TensorDict): Environment tensor instance.
+            obs_list(list, optional): List of observations to retrieve. Defaults to None.
 
-        Returns:
-            TensorDict: Environment tensor instance with the observations.
+        Returns
+            td(TensorDict): Updated tensor with observations.
         """
         td_observations = self.obs_builder.get_observations(obs_list=obs_list)
 
@@ -107,10 +103,10 @@ class Environment(PEnv):
         Inactive agents (empty mask) are forced to return to the depot.
 
         Args:
-            td (TensorDict): Environment tensor instance.
+            td(TensorDict): Environment tensor instance.
 
         Returns:
-            TensorDict: Updated tensor with ``"next_actions"`` of shape [B, A].
+            td(TensorDict): Updated tensor with ``"next_actions"`` of shape [B, A].
         """
         batch_size = self.td_state.batch_size
         depot_idx = self.td_state['depot_idx']       # [B, 1]
@@ -166,33 +162,26 @@ class Environment(PEnv):
               batch_size: Optional[torch.Size] = None,
               n_augment: Optional[int] = None,
               seed:int|None=None,
-              device: Optional[str] = None)-> TensorDict:
+              device: Optional[str] = "cpu")-> TensorDict:
         """
         Reset the environment.
 
         Args:
-            num_agents (int, optional): Total number of agents. Defaults to None.
-            num_nodes (int, optional): Total number of nodes. Defaults to None.
-            capacity (int, optional): Capacity of each agent. Defaults to None.
-            profits (str, optional): Profit type. Defaults to "constant".
-            speed (float, optional): Vehicles' speed. Defaults to None.
-            instance_name (str, optional): Instance name. Defaults to None.
-            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
-            instance_dict (Dict, optional): Instance data to use instead of sampling a new instance. Defaults to None.
-            force_visit (bool, optional): If True, agents must visit all feasible nodes before returning to the depot. Defaults to False.
-            batch_size (torch.Size, optional): Batch size. Defaults to None.
-            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
-            seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda"; None keeps the environment device. Defaults to None.
+            num_agents(int, optional): Total number of agents. Defaults to None.
+            num_nodes(int, optional): Total number of nodes. Defaults to None.
+            capacity(int, optional): Total capacity for each agent. Defaults to None.
+            speed (float): Travel speed for all agents. Defaults to None.
+            instance_name(str, optional): Instance name. Defaults to None.
+            sample_type(str): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            instance_dict(Dict, optional): Instance dictionary. Defaults to None.
+            force_visit(bool, optional): Force visit. Defaults to False.
+            batch_size(torch.Size, optional): Batch size. Defaults to None.
+            n_augment(int, optional): Data augmentation. Defaults to None.
+            seed(int, optional): Random number generator seed. Defaults to None.
 
         Returns:
-            TensorDict: Environment tensor instance.
+            TensorDict: Environment information dictionary.
         """
-
-        if device is None:
-            device = self.device
-        else:
-            self.device = device
 
         if seed is not None:
             self._set_seed(seed)
@@ -227,7 +216,7 @@ class Environment(PEnv):
         else:
             self.n_digits = None
 
-        self.td_state = instance_info['data'].to(self.device)
+        self.td_state = instance_info['data']
         self.td_state['speed'] = instance_info['data']['speed'].clone()
 
         self.td_state['done'] = torch.zeros(*batch_size, dtype=torch.bool)
@@ -300,29 +289,27 @@ class Environment(PEnv):
               batch_size: Optional[torch.Size] = None,
               n_augment: Optional[int] = None,
               seed:int|None=None,
-              device: Optional[str] = None,
+              device: Optional[str] = "cpu",
               obs_list: Optional[List[str]] = ['agents_action_mask']) -> TensorDict:
         """
         Resets and observe the environment.
 
         Args:
-            num_agents (int, optional): Total number of agents. Defaults to None.
-            num_nodes (int, optional): Total number of nodes. Defaults to None.
-            capacity (float, optional): Capacity of each agent. Defaults to None.
-            profits (str, optional): Profit strategy. Defaults to "constant".
-            speed (float, optional): Vehicles' speed. Defaults to None.
-            instance_name (str, optional): Instance name. Defaults to None.
-            sample_type (str, optional): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
-            instance_dict (Dict, optional): Instance data to use instead of sampling a new instance. Defaults to None.
-            force_visit (bool, optional): If True, agents must visit all feasible nodes before returning to the depot. Defaults to False.
-            batch_size (torch.Size, optional): Batch size. Defaults to None.
-            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
-            seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda"; None keeps the environment device. Defaults to None.
-            obs_list (List[str], optional): List of observations to include. Defaults to ['agents_action_mask'].
+            num_agents(int, optional): Total number of agents. Defaults to None.
+            num_nodes(int, optional): Total number of nodes. Defaults to None.
+            capacity(float, optional): Total capacity for each agent. Defaults to None.
+            profits(str, optional): Profit strategy. Defaults to 'constant'.
+            speed(float, optional): Vehicles' speed. Defaults to None.
+            instance_name(str, optional): Instance name. Defaults to None.
+            sample_type(str): Sample type. It can be "random", "augment" or "saved". Defaults to "random".
+            force_visit(bool): It forces the agent to visit all feasible nodes before going back to depot. Defaults to True.
+            batch_size(torch.Size, optional): Batch size. Defaults to None.
+            n_augment(int, optional): Data augmentation. Defaults to None.
+            seed(int, optional): Random number generator seed. Defaults to None.
+            obs_list(List[str], optional): List of observations to be retrieved. Defaults to ['agents_action_mask'].
 
         Returns:
-            TensorDict: Environment tensor instance.
+            TensorDict: Environment information dictionary.
         """
 
         td = self.reset(num_agents=num_agents,
@@ -406,10 +393,10 @@ class Environment(PEnv):
         mask = mask & ~done.unsqueeze(-1).unsqueeze(-1)
 
         # Open depot for agent 0 only in done rows (batch consistency)
-        depot_idx = self.td_state['depot_idx'].squeeze(-1) if self.td_state['depot_idx'].dim() > 1 else self.td_state['depot_idx']
-        depot_col = depot_idx.reshape(-1, 1)                          # [B, 1]
-        agent0_mask = mask[:, 0]                                      # view [B, N]
-        agent0_mask.scatter_(1, depot_col, agent0_mask.gather(1, depot_col) | done.reshape(-1, 1))
+        done_rows = done.squeeze(-1).nonzero(as_tuple=True)[0]
+        if done_rows.numel() > 0:
+            depot_idx = self.td_state['depot_idx'].squeeze(-1) if self.td_state['depot_idx'].dim() > 1 else self.td_state['depot_idx']
+            mask[done_rows, 0, depot_idx[done_rows]] = True
 
         return mask
 
@@ -418,7 +405,10 @@ class Environment(PEnv):
         Update done state for all agents simultaneously.
 
         Args:
-            actions (torch.Tensor): [B, A] tensor with all agents' moves.
+            actions(torch.Tensor): [B, A] tensor with all agents' moves.
+
+        Returns:
+            None.
         """
         self._update_done_all(actions)
 
@@ -427,7 +417,10 @@ class Environment(PEnv):
         Update done state for all agents simultaneously.
 
         Args:
-            actions (torch.Tensor): [B, A] tensor with all agents' moves.
+            actions(torch.Tensor): [B, A] tensor with all agents' moves.
+
+        Returns:
+            None.
         """
         former_done = self.td_state['done'].clone()
 
@@ -440,7 +433,7 @@ class Environment(PEnv):
         )
 
         self.td_state['done'] = (~self.td_state['agents']['active_agents_mask']).all(dim=-1)
-        self.td_state['done'] = self.td_state['done'] | former_done
+        self.td_state['done'][former_done] = True
 
         # Depot stays active (scatter True); customer nodes become inactive (scatter False)
         self.td_state['nodes']['active_nodes_mask'].scatter_(1, actions, went_to_depot)
@@ -454,7 +447,10 @@ class Environment(PEnv):
         Update environment state for all agents simultaneously.
 
         Args:
-            actions (torch.Tensor): [B, A] tensor with all agents' moves.
+            actions(torch.Tensor): [B, A] tensor with all agents' moves.
+
+        Returns:
+            None.
         """
         self._update_state_all(actions)
 
@@ -463,7 +459,10 @@ class Environment(PEnv):
         Update environment state for all agents simultaneously.
 
         Args:
-            actions (torch.Tensor): [B, A] tensor with all agents' moves.
+            actions(torch.Tensor): [B, A] tensor with all agents' moves.
+
+        Returns:
+            None.
         """
         batch_size = self.td_state.batch_size
 
@@ -537,14 +536,19 @@ class Environment(PEnv):
         )
 
         # If all agents are done, activate agent 0 to keep batch consistency
-        self.td_state['agents']['active_agents_mask'][:, 0] |= ~self.td_state['agents']['active_agents_mask'].any(1)
+        self.td_state['agents']['active_agents_mask'][
+            self.td_state['agents']['active_agents_mask'].sum(1).eq(0), 0
+        ] = True
 
     def _update_solution(self, actions):
         """
         Update agents and actions in solution.
 
         Args:
-            actions (torch.Tensor): [B, A] tensor with agents' moves.
+            actions(torch.Tensor): [B, A] tensor with agents' moves.
+
+        Returns:
+            None.
         """
         if 'actions' in self.td_state['solution'].keys():
             self.td_state['solution', 'actions'] = torch.cat(
@@ -565,7 +569,10 @@ class Environment(PEnv):
         Update solution with all agents' actions for one simultaneous step.
 
         Args:
-            actions (torch.Tensor): [B, A] tensor with all agents' moves.
+            actions(torch.Tensor): [B, A] tensor with all agents' moves.
+
+        Returns:
+            None.
         """
         batch_size = self.td_state.batch_size
         # Agent indices for this step: [B, A]
@@ -594,15 +601,16 @@ class Environment(PEnv):
         All agents act in parallel in a single call.
 
         Args:
-            td (TensorDict): Environment tensor instance.
+            td(TensorDict): Environment tensor instance.  Must contain
+                ``"next_actions"`` of shape ``[B, A]``.
 
         Returns:
-            TensorDict: Updated environment tensor instance.
+            td(TensorDict): Updated environment tensor instance.
         """
         actions = td["next_actions"]   # [B, A]
         # Only check feasibility for active agents
         active_agents = self.td_state['agents']['active_agents_mask']  # [B, A]
-        if self.check_actions and active_agents.any():
+        if active_agents.any():
             assert (
                 self.td_state['agents']['action_mask']
                 .gather(2, actions.unsqueeze(-1))
@@ -636,11 +644,13 @@ class Environment(PEnv):
         Perform a simultaneous environment step for ALL agents, then observe.
 
         Args:
-            td (TensorDict): Environment tensor instance.
-            obs_list (List[str], optional): List of observations to include. Defaults to ['agents_action_mask'].
+            td(TensorDict): Environment tensor instance.  Must contain
+                ``"next_actions"`` of shape ``[B, A]``.
+            obs_list (Optional[List[str]]): List of observation keys to include.
+                Defaults to ``['agents_action_mask']``.
 
         Returns:
-            TensorDict: Updated environment tensor instance with observations.
+            td(TensorDict): Updated environment tensor instance with observations.
         """
         td = self.step_all(td)
         td = self.observe(td, obs_list=obs_list)
@@ -652,11 +662,12 @@ class Environment(PEnv):
         Perform a simultaneous environment step for ALL agents, then observe.
 
         Args:
-            td (TensorDict): Environment tensor instance.
-            obs_list (List[str], optional): List of observations to include. Defaults to ['agents_action_mask'].
+            td(TensorDict): Environment tensor instance.
+            obs_list (Optional[List[str]]): List of observation keys to include.
+                Defaults to ['agents_action_mask'].
 
         Returns:
-            TensorDict: Updated environment tensor instance.
+            td(TensorDict): Updated environment tensor instance.
         """
         return self.step_all_observe(td, obs_list=obs_list)
 
@@ -664,8 +675,11 @@ class Environment(PEnv):
         """
         Check if solution is valid according to PCVRP constraints.
 
-        Raises:
-            AssertionError: If the solution violates a problem constraint.
+        Args:
+            N/a.
+
+        Returns:
+            None. Raises AssertionError if invalid.
         """
 
         curr_node = torch.zeros(*self.batch_size, dtype=torch.int64, device=self.device)

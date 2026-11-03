@@ -4,7 +4,7 @@
 TOP
 ==========
 
-Parallel environment for the Team Orienteering Problem (TOP), see [Cha96]_.
+Parallel environment for the Team Orienteering Problem (TOP).
 
 .. toctree::
     :maxdepth: 1

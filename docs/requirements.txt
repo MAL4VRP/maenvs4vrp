@@ -2,4 +2,3 @@ nbsphinx
 sphinx-math-dollar
 sphinx-copybutton
 furo
-ipython

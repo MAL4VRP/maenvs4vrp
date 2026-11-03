@@ -1,4 +1,3 @@
-"""Base class for parallel environments, where all agents act at every step."""
 from maenvs4vrp.core.env_generator_builder import InstanceBuilder
 from maenvs4vrp.core.env_observation_builder import ObservationBuilder
 from maenvs4vrp.core.env_agent_selector import BaseSelector
@@ -25,15 +24,16 @@ class PEnv():
             batch_size: Optional[torch.Size] = None,
             ):
         """
-        Initialize the PEnv.
+        Constructor
 
         Args:
-            instance_generator_object (InstanceBuilder): Generator instance.
-            obs_builder_object (ObservationBuilder): Observations instance.
-            reward_evaluator (RewardFn): Reward evaluator instance.
-            seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to None.
-            batch_size (torch.Size, optional): Batch size. Defaults to None.
+            instance_generator_object(InstanceBuilder): Generator instance.
+            obs_builder_object(ObservationBuilder): Observations instance.
+            reward_evaluator(RewardFn): Reward evaluator instance.
+            seed(int): Random number generator seed. Defaults to None.
+            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to None.
+            batch_size(torch.Size): Batch size. Defaults to None.
+
         """
 
         if seed is None:
@@ -76,7 +76,10 @@ class PEnv():
         Set the random seed used by the environment.
 
         Args:
-            seed (int): Random number generator seed.
+            seed(int, optional): Seed to be set.
+
+        Returns:
+            None.
         """
         self.seed = seed
         rng = torch.manual_seed(self.seed)
@@ -88,8 +91,11 @@ class PEnv():
         Compute the environment.
 
         Args:
-            obs_list (list, optional): List of observations to include. Defaults to None.
-            update_all (bool, optional): If True, update all agents' observations. Defaults to False.
+            obs_list(list, optional): List of observations to include. Defaults to None.
+            update_all(bool, optional): If True, update all agents' observations. Defaults to False.
+
+        Returns
+            TensorDict: Current agent observaions and masks dictionary.
         """
         raise NotImplementedError()
 
@@ -99,7 +105,10 @@ class PEnv():
         Compute random actions from avaliable actions to all agents.
 
         Args:
-            td (TensorDict): Environment tensor instance.
+            td(TensorDict): Environment instance tensor.
+
+        Returns:
+            TensorDict: Tensor environment instance with updated action.
         """
         raise NotImplementedError()
 
@@ -109,6 +118,12 @@ class PEnv():
     def reset(self) -> TensorDict:
         """
         Reset the environment to a starting state and return infos dict.
+
+        Args:
+            n/a.
+
+        Returns:
+            TensorDict: Environment information.
         """
         raise NotImplementedError()
 
@@ -116,6 +131,9 @@ class PEnv():
     def reset_observe(self) -> TensorDict:
         """
         Resets and observe the environment.
+
+        Returns:
+            TensorDict: Updated environment instance tensor.
         """
         raise NotImplementedError()
 
@@ -133,7 +151,11 @@ class PEnv():
         Perform an environment step for active agent.
 
         Args:
-            td (TensorDict): Environment tensor instance.
+            td(TensorDict): Environment tensor instance.
+
+        Returns:
+            TensorDict: Updated tensor environment instance.
+
         """
         raise NotImplementedError()
 
@@ -144,8 +166,11 @@ class PEnv():
         Perform an environment step for active agent.
 
         Args:
-            td (TensorDict): Environment tensor instance.
-            obs_list (List[str], optional): List of observations to include. Defaults to ['all_agents_action_mask'].
+            td(TensorDict): Environment tensor instance.
+            obs_list (Optional[List[str]]): List of observation keys to include. Defaults to ['all_agents_action_mask'].
+
+        Returns:
+            td(TensorDict): Updated environment tensor instance.
         """
         raise NotImplementedError()
 
@@ -154,6 +179,12 @@ class PEnv():
     def check_solution_validity(self):
         """
         Check if solution is valid according to problem constraints.
+
+        Args:
+            N/a.
+
+        Returns:
+            None. Raises AssertionError if invalid.
         """
         raise NotImplementedError()
 

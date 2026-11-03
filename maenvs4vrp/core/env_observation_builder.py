@@ -1,4 +1,3 @@
-"""Base class for observation builders."""
 from typing import Optional, Dict, List
 import torch
 from tensordict import TensorDict
@@ -17,10 +16,11 @@ class ObservationBuilder:
 
     def __init__(self, feature_list:Dict = None):
         """
-        Initialize the observation builder.
+        Constructor
 
         Args:
-            feature_list (Dict, optional): Dictionary containing observation features list to be available to the agent. Defaults to None.
+            feature_list(Dict): Dictionary containing observation features list to be available to the agent. Defaults to None.
+
         """
         self.default_feature_list = {'nodes_static': {},
                                      'edges_static': {},
@@ -38,8 +38,7 @@ class ObservationBuilder:
         self.possible_edges_static_features = self.POSSIBLE_EDGES_STATIC_FEATURES
         self.possible_nodes_dynamic_features = self.POSSIBLE_NODES_DYNAMIC_FEATURES
         self.possible_agent_features = self.POSSIBLE_AGENT_FEATURES
-        self.possible_other_agents_features = self.POSSIBLE_OTHER_AGENTS_FEATURES
-        self.possible_agents_features = self.possible_other_agents_features  # legacy name
+        self.possible_agents_features = self.POSSIBLE_OTHER_AGENTS_FEATURES
         self.possible_all_agents_features = self.POSSIBLE_ALL_AGENTS_FEATURES
         self.possible_global_features = self.POSSIBLE_GLOBAL_FEATURES
 
@@ -49,7 +48,10 @@ class ObservationBuilder:
         Set environment.
 
         Args:
-            env (AECEnv): Environment.
+            env(AECEnv): Environment.
+
+        Returns:
+            None.
         """
 
         self.env = env
@@ -57,6 +59,9 @@ class ObservationBuilder:
     def get_nodes_static_feat_dim(self):
         """
         Nodes static features dimensions.
+
+        Args:
+            n/a.
 
         Returns:
             int: Nodes static features dimensions.
@@ -68,6 +73,9 @@ class ObservationBuilder:
         """
         Nodes dynamic features dimensions.
 
+        Args:
+            n/a.
+
         Returns:
             int: Nodes dynamic features dimensions.
         """
@@ -76,6 +84,9 @@ class ObservationBuilder:
     def get_nodes_feat_dim(self):
         """
         Nodes features dimensions.
+
+        Args:
+            n/a.
 
         Returns:
             int: Nodes features dimensions.
@@ -86,6 +97,9 @@ class ObservationBuilder:
         """
         Agent features dimensions.
 
+        Args:
+            n/a.
+
         Returns:
             int: Agent features dimensions.
         """
@@ -95,6 +109,9 @@ class ObservationBuilder:
         """
         Other agent features dimensions.
 
+        Args:
+            n/a.
+
         Returns:
             int: Other agent features dimensions.
         """
@@ -102,8 +119,6 @@ class ObservationBuilder:
 
     def get_all_agents_feat_dim(self):
         """
-        Get the dimension of the all-agents features.
-
         Returns:
             int: all agents features dimentions.
         """
@@ -112,6 +127,9 @@ class ObservationBuilder:
     def get_global_feat_dim(self):
         """
         Global features dimensions.
+
+        Args:
+            n/a.
 
         Returns:
             int: Global features dimensions.
@@ -122,6 +140,9 @@ class ObservationBuilder:
     def compute_static_features(self):
         """
         Compute nodes static features.
+
+        Args:
+            n/a.
 
         Returns:
             torch.Tensor: Nodes static features.
@@ -137,9 +158,9 @@ class ObservationBuilder:
             f_feat = features_static.get(f).get('feat')
             dim = features_static.get(f).get('dim')
             if dim:
-                feature = getattr(self, f'get_feat_{f_feat}')(dim)
+                feature = eval(f'self.get_feat_{f_feat}')(dim)
             else:
-                feature = getattr(self, f'get_feat_{f_feat}')()
+                feature = eval(f'self.get_feat_{f_feat}')()
             f_norm = features_static.get(f).get('norm')
             norm_feature = self._normalize_feature(feature, f_norm)
             features.append(norm_feature)
@@ -149,8 +170,11 @@ class ObservationBuilder:
         """
         Compute edges static features.
 
+        Args:
+            n/a.
+
         Returns:
-            torch.Tensor: Edges static features, with shape [B, N, N, F].
+            torch.Tensor: Edges static features.
         """
         features_static = self.feature_list.get('edges_static')
         features_static_set = set([features_static.get(f).get('feat') for f in features_static])
@@ -158,20 +182,23 @@ class ObservationBuilder:
         assert_msg = f'{undefined_feat} are not defined, choose from {str(self.possible_edges_static_features)}'
         assert len(undefined_feat)==0, assert_msg
 
-        features = list()
+        features = dict()
         for f in features_static:
             f_feat = features_static.get(f).get('feat')
             dim = features_static.get(f).get('dim')
             if dim:
-                feature = getattr(self, f'get_edges_feat_{f_feat}')(dim)
+                feature = eval(f'self.get_edges_feat_{f_feat}')(dim)
             else:
-                feature = getattr(self, f'get_edges_feat_{f_feat}')()
-            features.append(feature.unsqueeze(-1) if feature.dim() == 3 else feature)
-        return torch.cat(features, dim=-1)
+                feature = eval(f'self.get_edges_feat_{f_feat}')()
+            features[f] = feature
+        return features
 
     def compute_dynamic_features(self):
         """
         Compute nodes dynamic features.
+
+        Args:
+            n/a.
 
         Returns:
             torch.Tensor: Nodes dynamic features.
@@ -182,12 +209,15 @@ class ObservationBuilder:
         assert len(undefined_feat)==0, assert_msg
         features = list()
         for f in features_dynamic:
-            features.append(getattr(self, f'get_feat_{f}')())
+            features.append(eval(f'self.get_feat_{f}')())
         return self._concat_features(features)
 
     def compute_agent_features(self):
         """
         Compute current agent features.
+
+        Args:
+            n/a.
 
         Returns:
             torch.Tensor: Current agent features.
@@ -198,12 +228,15 @@ class ObservationBuilder:
         assert len(undefined_feat)==0, assert_msg
         features = list()
         for f in features_self:
-            features.append(getattr(self, f'get_feat_agent_{f}')())
+            features.append(eval(f'self.get_feat_agent_{f}')())
         return self._concat_features(features).squeeze(1)
 
     def compute_other_agents_features(self):
         """
         Compute other agent features.
+
+        Args:
+            n/a.
 
         Returns:
             torch.Tensor: Other agent features.
@@ -214,12 +247,15 @@ class ObservationBuilder:
         assert len(undefined_feat)==0, assert_msg
         features = list()
         for f in features_agents:
-            features.append(getattr(self, f'get_feat_other_agents_{f}')())
+            features.append(eval(f'self.get_feat_other_agents_{f}')())
         return self._concat_features(features)
 
     def compute_all_agents_features(self):
         """
         Compute all agent features.
+
+        Args:
+            n/a.
 
         Returns:
             torch.Tensor: All agent features.
@@ -230,13 +266,16 @@ class ObservationBuilder:
         assert len(undefined_feat)==0, assert_msg
         features = list()
         for f in features_agents:
-            features.append(getattr(self, f'get_feat_all_agents_{f}')())
+            features.append(eval(f'self.get_feat_all_agents_{f}')())
         return self._concat_features(features)
 
 
     def compute_global_features(self):
         """
         Compute global features.
+
+        Args:
+            n/a.
 
         Returns:
             torch.Tensor: Global features.
@@ -247,7 +286,7 @@ class ObservationBuilder:
         assert len(undefined_feat)==0, assert_msg
         features = list()
         for f in features_global:
-            features.append(getattr(self, f'get_feat_global_{f}')())
+            features.append(eval(f'self.get_feat_global_{f}')())
         return self._concat_features(features).squeeze(dim=1)
 
 
@@ -256,10 +295,10 @@ class ObservationBuilder:
         Get observations method.
 
         Args:
-            obs_list (List[str], optional): List of observations to include. Defaults to None.
+            obs_list: List of observations to compute. Defaults to None.
 
-        Returns:
-            TensorDict: Current environment observations and masks dictionary.
+        Returns
+            observations(TensorDict): Current environment observations and masks dictionary.
         """
         observations = TensorDict({}, batch_size=self.env.batch_size, device=self.env.device)
         if obs_list is None:
@@ -274,7 +313,7 @@ class ObservationBuilder:
             observations['nodes_dynamic_obs'] =  dynamic_feat
 
         if self.feature_list.get('edges_static') and 'edges_static' in obs_list:
-            static_feat = self.compute_edges_static_features()
+            static_feat = self.compute_static_features()
             observations['edges_static_obs'] =  static_feat
 
         if self.feature_list.get('agent') and 'agent' in obs_list:
@@ -310,7 +349,7 @@ class ObservationBuilder:
         Concatenate features.
 
         Args:
-            features (list): Features to concatenate.
+            features(list): Features to concatenate.
 
         Returns:
             torch.Tensor: Concatenated tensor.
@@ -325,8 +364,8 @@ class ObservationBuilder:
         Normalize features.
 
         Args:
-            x (torch.Tensor): Tensor to be normalized.
-            norm (str): Type of normalization. It can be 'min_max' or 'standardize'. If None, tensor is returned.
+            x(torch.Tensor): Tensor to be normalized.
+            norm(str): Type of normalization. It can be 'min_max' or 'standardize'. If None, tensor is returned.
 
         Returns:
             torch.Tensor: Tensor normalized or default tensor if norm is invalid.
@@ -345,7 +384,7 @@ class ObservationBuilder:
         Min. max. normalization.
 
         Args:
-            x (torch.Tensor): Tensor to be normalized.
+            x(torch.Tensor): Tensor to be normalized.
 
         Returns:
             torch.Tensor: Normalized tensor.
@@ -360,7 +399,7 @@ class ObservationBuilder:
         Min. max. normalization 2 dimensions.
 
         Args:
-            x (torch.Tensor): Tensor to be normalized.
+            x(torch.Tensor): Tensor to be normalized.
 
         Returns:
             torch.Tensor: Normalized tensor.
@@ -375,7 +414,7 @@ class ObservationBuilder:
         Tensor standardization.
 
         Args:
-            x (torch.Tensor): Tensor to be normalized.
+            x(torch.Tensor): Tensor to be normalized.
 
         Returns:
             torch.Tensor: Normalized tensor.

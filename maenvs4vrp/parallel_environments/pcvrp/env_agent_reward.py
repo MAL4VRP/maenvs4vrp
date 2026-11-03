@@ -1,4 +1,3 @@
-"""Reward functions for the PCVRP parallel environment."""
 import torch
 from tensordict import TensorDict
 from maenvs4vrp.core.env_agent_reward import RewardFn
@@ -14,7 +13,13 @@ class DenseReward(RewardFn):
 
     def __init__(self):
         """
-        Initialize the reward function.
+        Constructor.
+
+        Args:
+            n/a.
+
+        Returns:
+            None.
         """
         self.env = None
         self.pending_penalty = -10
@@ -25,7 +30,10 @@ class DenseReward(RewardFn):
         Set environment.
 
         Args:
-            env (AECEnv): Environment.
+            env(AECEnv): Environment.
+
+        Returns:
+            None.
         """
 
         self.env = env
@@ -35,10 +43,11 @@ class DenseReward(RewardFn):
         Get reward and penalty.
 
         Args:
-            actions (torch.Tensor): [B, A] tensor with all agents' moves.
+            action(torch.Tensor): [B, A] tensor with all agents' moves.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Reward and penalty, with shape [B, 1] each.
+            reward(torch.Tensor): Per-agent reward of shape [B, A].
+            penalty(torch.Tensor): Per-agent penalty of shape [B, A].
         """
 
         # Each agent's reward = negative travel time it spent on this step
@@ -62,7 +71,9 @@ class DenseReward(RewardFn):
             .sum(-1).float()
         )
         # Assign equally to all agents in the last-step rows: [n_done] -> [n_done, A]
-        penalty = torch.where(is_last_step.unsqueeze(-1), unvisited_penalty.unsqueeze(-1).expand(-1, self.env.num_agents), penalty)
+        penalty[is_last_step] = (
+            unvisited_penalty[is_last_step].unsqueeze(-1).expand(-1, self.env.num_agents)
+        )
 
         return reward, penalty
 
@@ -75,7 +86,13 @@ class SparseReward(RewardFn):
 
     def __init__(self):
         """
-        Initialize the reward function.
+        Constructor.
+
+        Args:
+            n/a.
+
+        Returns:
+            None.
         """
         self.env = None
         self.pending_penalty = -10
@@ -86,7 +103,10 @@ class SparseReward(RewardFn):
         Set environment.
 
         Args:
-            env (Environment): Environment.
+            env(Environment): Environment.
+
+        Returns:
+            None.
         """
 
         self.env = env
@@ -96,10 +116,11 @@ class SparseReward(RewardFn):
         Get reward and penalty.
 
         Args:
-            actions (torch.Tensor): [B, A] tensor with all agents' moves.
+            actions(torch.Tensor): [B, A] tensor with all agents' moves.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Reward and penalty, with shape [B, 1] each.
+            reward(torch.Tensor): Reward.
+            penalty(torch.Tensor): Penalty.
         """
 
         # Each agent's reward and penalty: [B, A]
@@ -126,7 +147,9 @@ class SparseReward(RewardFn):
             .sum(-1).float()
         )
         # Assign equally to all agents in the last-step rows: [n_done] -> [n_done, A]
-        penalty = torch.where(is_last_step.unsqueeze(-1), unvisited_penalty.unsqueeze(-1).expand(-1, self.env.num_agents), penalty)
+        penalty[is_last_step] = (
+            unvisited_penalty[is_last_step].unsqueeze(-1).expand(-1, self.env.num_agents)
+        )
 
-        reward = torch.where(is_last_step.unsqueeze(-1), final_reward, reward)
+        reward[is_last_step] = final_reward[is_last_step]
         return reward, penalty

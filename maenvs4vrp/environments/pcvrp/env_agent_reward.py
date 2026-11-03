@@ -1,4 +1,3 @@
-"""Reward functions for the PCVRP environment."""
 import torch
 from tensordict import TensorDict
 from maenvs4vrp.core.env_agent_reward import RewardFn
@@ -13,7 +12,13 @@ class DenseReward(RewardFn):
 
     def __init__(self):
         """
-        Initialize the reward function.
+        Constructor.
+
+        Args:
+            n/a.
+
+        Returns:
+            None.
         """
         self.env = None
 
@@ -22,7 +27,10 @@ class DenseReward(RewardFn):
         Set environment.
 
         Args:
-            env (AECEnv): Environment.
+            env(AECEnv): Environment.
+
+        Returns:
+            None.
         """
         self.env = env
 
@@ -31,10 +39,11 @@ class DenseReward(RewardFn):
         Get reward and penalty.
 
         Args:
-            action (torch.Tensor): [B, A] tensor with all agents' moves.
+            action(torch.Tensor): Tensor with agent moves.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Reward and penalty, with shape [B, 1] each.
+            reward(torch.Tensor): Reward.
+            penalty(torch.Tensor): Penalty.
         """
 
         reward = -self.env.td_state['cur_agent']['cur_travel_time'].clone() + self.env.td_state['profits'].gather(1, action).clone()
@@ -51,7 +60,13 @@ class SparseReward(RewardFn):
 
     def __init__(self):
         """
-        Initialize the reward function.
+        Constructor.
+
+        Args:
+            n/a.
+
+        Returns:
+            None.
         """
         self.env = None
 
@@ -60,7 +75,10 @@ class SparseReward(RewardFn):
         Set environment.
 
         Args:
-            env (Environment): Environment.
+            env(Environment): Environment.
+
+        Returns:
+            None.
         """
         self.env = env
 
@@ -69,10 +87,11 @@ class SparseReward(RewardFn):
         Get reward and penalty.
 
         Args:
-            action (torch.Tensor): Tensor with agent moves.
+            action(torch.Tensor): Tensor with agent moves.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Reward and penalty, with shape [B, 1] each.
+            reward(torch.Tensor): Reward.
+            penalty(torch.Tensor): Penalty.
         """
 
         reward = torch.zeros_like(action, dtype = torch.float, device=self.env.device)
@@ -82,5 +101,5 @@ class SparseReward(RewardFn):
         is_last_step = self.env.td_state['is_last_step']
         final_reward = - self.env.td_state['agents']['cum_travel_time'].sum(1, keepdim = True) \
                        + self.env.td_state['agents']['cum_profit'].sum(-1, keepdim = True)
-        reward = torch.where(is_last_step.unsqueeze(-1), final_reward, reward)
+        reward[is_last_step] = final_reward[is_last_step]
         return reward, penalty

@@ -1,4 +1,3 @@
-"""Benchmark instance generator for the SDVRPTW environment."""
 import torch
 from tensordict import TensorDict
 
@@ -32,8 +31,8 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         BenchmarkInstanceGenerator (which triggers the download).
 
         Returns:
-            dict: Keys 'Solomon', 'Homberger' and 'Bianchessi'; values are lists of instance
-                  name strings, or empty lists when data is not available locally.
+            dict: Keys 'Solomon', 'Homberger', and 'Bianchessi'; values are lists of
+                  instance name strings, or empty lists when data is not available locally.
         """
         base_dir = path.dirname(path.dirname(path.abspath(__file__)))
         local_root = path.join(base_dir, DATA_PATH)
@@ -90,14 +89,14 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Constructor. Create an instance space of one or several sets of data.
 
         Args:
-            num_agents (int, optional): Total number of agents. Defaults to None.
-            num_nodes (int, optional): Total number of nodes. Defaults to None.
-            speed (float, optional): Vehicles' speed. Defaults to None.
-            instance_name (str, optional): Instance set name. It can be "Solomon", "Homberger" or "Bianchessi". Defaults to "Solomon".
-            list_of_instances (set, optional): List of instances file names. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
-            batch_size (torch.Size, optional): Batch size. Defaults to None.
-            seed (int, optional): Random number generator seed. Defaults to None.
+            instance_name(str): Instance type. Can be "Solomon" or "Homberger". Defaults to "Solomon".
+            set_of_instances(set): Set of instances file names. Defaults to None.
+            device(str, optional): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
+            batch_size(torch.Size, optional): Batch size. If not specified, defaults to 1.
+            seed(int): Random number generator seed. Defaults to None.
+
+        Returns:
+            None.
         """
 
         # seed the generation process
@@ -238,7 +237,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Read instance data from file.
 
         Args:
-            instance_name (str): Instance file name.
+            instance_name(str): Instance file name.
 
         Returns:
             Dict: Instance data.
@@ -264,7 +263,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Parse instance data list into a dictionary.
 
         Args:
-            instance_data (list): Instance data.
+            instance_data(list): Instance data.
 
         Returns:
             Dict: Parsed instance data.
@@ -323,8 +322,8 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Get an instance with custom number of agents.
 
         Args:
-            instance_name (str): Instance file name.
-            num_agents (int, optional): Total number of agents. Defaults to None.
+            instance_name(str): Instance file name.
+            num_agents(int): Number of agents. Defaults to None.
 
         Returns:
             Dict: Instance data.
@@ -347,10 +346,13 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
 
     def load_list_of_instances(self, list_of_instances:set=None):
         """
-        Load every instance on list_of_instances list.
+        Load every instance on set_of_instances set.
 
         Args:
-            list_of_instances (set, optional): List of instances file names. Defaults to None.
+            set_of_instances(set): Set of instances file names. Defaults to None.
+
+        Returns:
+            None.
         """
         if list_of_instances:
             self.list_of_instances = list_of_instances
@@ -366,8 +368,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Sample first n nodes.
 
         Args:
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
-
+            device(str): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
         Returns:
             Dict: New instance of the first n nodes.
         """
@@ -416,10 +417,8 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Sample one instance from instance space, randomly adjusting the nodes.
 
         Args:
-            instance_name (str, optional): Instance file path. Defaults to None.
-            seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
-
+            seed(int): Random number generator seed. Defaults to None.
+            device(str): Type of processing. It can be "cpu" or "gpu". Defaults to "cpu".
         Returns:
             Dict: Instance data.
         """
@@ -470,7 +469,7 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Sample one instance from instance list.
 
         Args:
-            seed (int, optional): Random number generator seed. Defaults to None.
+            seed(int, optional): Random number generator seed. Defaults to None.
 
         Returns:
             str: Instance name.
@@ -496,23 +495,19 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
         Sample one instance from instance space.
 
         Args:
-            num_agents (int, optional): Total number of agents. Defaults to None.
-            num_nodes (int, optional): Total number of nodes. Defaults to None.
-            capacity (int, optional): Capacity of each agent. Defaults to None.
-            service_times (float, optional): Service time in the nodes. Defaults to None.
-            speed (float, optional): Vehicles' speed. Defaults to None.
-            instance_name (str, optional): Instance name. Defaults to None.
-            sample_type (str, optional): Sample type. It can be "random" or "saved". Defaults to "random".
-            batch_size (torch.Size, optional): Batch size. Defaults to None.
-            n_augment (int, optional): Number of augmented copies of each instance (``batch_size`` must be divisible by it). Defaults to None.
-            seed (int, optional): Random number generator seed. Defaults to None.
-            device (str, optional): Device for tensor operations, e.g. "cpu" or "cuda". Defaults to "cpu".
+            num_agents(int): Total number of agents. Defaults to None.
+            num_nodes(int): Total number of nodes. Defaults to None.
+            capacity(int): Capacity of the agents. Defaults to None.
+            service_times(float): Service time in the nodes. Defaults to None.
+            speed(float): Vehicles' speed. Defaults to None.
+            instance_name(str): Instance name. Defaults to None.
+            sample_type(str): Sample type. It can be "random" or something else for "first n". Defaults to "random".
+            batch_size(torch.Size or None): Batch size. Defaults to None.
+            n_augment(int, optional): Data augmentation. Defaults to None.
+            seed(int): Random number generator seed. Defaults to None.
 
         Returns:
             Dict: Instance data.
-
-        Raises:
-            ValueError: If ``sample_type`` is not "random" or "saved".
         """
         if seed is not None:
             self._set_seed(seed)
@@ -538,11 +533,9 @@ class BenchmarkInstanceGenerator(InstanceBuilder):
             instance = self.random_sample_instance(instance_name=instance_name,
                                                    seed=seed,
                                                    device=device)
-        elif sample_type=='saved':
+        else:
             # sample first n
             instance = self.sample_first_n_services(device=device)
-        else:
-            raise ValueError(f"Unknown sample_type '{sample_type}'. Expected 'random' or 'saved'.")
 
         return instance
 

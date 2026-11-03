@@ -20,3 +20,7 @@ Here's everything about CVRPTW environment:
     environment/environment
     generation/generation
     observations/observations
+
+**References**
+
+.. [Sol87] M, M. Solomon, "Algorithms for the vehicle routing and scheduling problems with time window constraints", Operations Research, 35(2):254–265, 1987;

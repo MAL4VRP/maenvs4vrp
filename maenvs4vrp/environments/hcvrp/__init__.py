@@ -1,1 +1,0 @@
-"""HCVRP environment."""

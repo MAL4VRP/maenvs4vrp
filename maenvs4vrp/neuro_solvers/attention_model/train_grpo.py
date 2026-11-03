@@ -54,25 +54,11 @@ from attention_model.policy_net_am import PolicyNet
 
 def save_model_state_dict(save_path, model_policy):
     # save the policy state dict
-    """
-    Save the policy state dict to disk.
-
-    Args:
-        save_path: File path where the state dict is saved.
-        model_policy: Policy model to save.
-    """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     state_dict = model_policy.to("cpu").state_dict()
     torch.save(state_dict, save_path)
 
 def set_random_seed(seed, torch_deterministic):
-    """
-    Seed the random number generators.
-
-    Args:
-        seed (int): Random number generator seed.
-        torch_deterministic: If True, make cuDNN deterministic.
-    """
     random.seed(seed)
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = torch_deterministic
@@ -80,13 +66,7 @@ def set_random_seed(seed, torch_deterministic):
 
 def train(args, writer):
 
-    """
-    ENV SETUP
-
-    Args:
-        args (argparse.Namespace): Command line arguments.
-        writer: TensorBoard summary writer.
-    """
+    """ ENV SETUP """
 
     if args.vrp_env == 'cvrp':
         feature_list = yaml.safe_load("""
@@ -160,8 +140,7 @@ def train(args, writer):
                     reward_evaluator=reward_evaluator,
                     device=args.env_device,
                     batch_size = args.batch_size,
-                    seed=args.seed,
-                    check_actions=False)  # actions come from the masked policy
+                    seed=args.seed)
 
     if args.val_set == 'None':
         eval_generator = importlib.import_module(generator_module_name).InstanceGenerator(device=args.env_device)
@@ -275,7 +254,7 @@ def train(args, writer):
 
                     td['next_action'] = action.unsqueeze(1).to(args.env_device)
                     td = env.step_agent_select_observe(
-                        td, obs_list=['agent_cur_node_idx', 'action_mask', 'agent'])
+                        td, obs_list=['agent_cur_node_idx', 'nodes_static', 'action_mask', 'agent'])
 
                     if rb_node_dyn_obs is not None:
                         rb_node_dyn_obs[step_idx] = node_dyn_obs
@@ -490,19 +469,6 @@ def train(args, writer):
     writer.close()
 
 def evaluate(args, writer, eval_env, policy, ep):
-    """
-    Evaluate the policy on the evaluation environment and log the results.
-
-    Args:
-        args (argparse.Namespace): Command line arguments.
-        writer: TensorBoard summary writer.
-        eval_env: Evaluation environment.
-        policy: Policy network.
-        ep: Current epoch.
-
-    Returns:
-        tuple: Total reward, number of unvisited nodes and number of used agents.
-    """
     policy.eval()
 
     total_reward = []
@@ -554,7 +520,7 @@ def evaluate(args, writer, eval_env, policy, ep):
 
                 # execute the environment and log data
                 td['next_action'] = action.unsqueeze(1).to(args.env_device)
-                td = eval_env.step_agent_select_observe(td, obs_list=['agent_cur_node_idx', 'action_mask', 'agent'])
+                td = eval_env.step_agent_select_observe(td, obs_list=['agent_cur_node_idx', 'nodes_static', 'action_mask', 'agent'])
 
                 f_reward.append(td['reward'] + td['penalty'])
 
@@ -575,12 +541,6 @@ def evaluate(args, writer, eval_env, policy, ep):
 
 
 def parse_args():
-    """
-    Parse the command line arguments.
-
-    Returns:
-        argparse.Namespace: Parsed arguments.
-    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--vrp_env", type=str, default="cvrp", help="select the vrp environment to train on")
     parser.add_argument("--num_agents", type=int, default=3, help="number of agents")
@@ -592,12 +552,6 @@ def parse_args():
 
 
 def get_args():
-    """
-    Parse the command line arguments and complete them with derived settings.
-
-    Returns:
-        argparse.Namespace: Arguments.
-    """
     args = parse_args()
     args.model_name     = 'am_grpo_model'
     args.device         = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -641,12 +595,6 @@ def get_args():
 
 
 def main(args):
-    """
-    Training entry point.
-
-    Args:
-        args (argparse.Namespace): Command line arguments.
-    """
     print("Training with args", args)
 
     if args.seed is not None:

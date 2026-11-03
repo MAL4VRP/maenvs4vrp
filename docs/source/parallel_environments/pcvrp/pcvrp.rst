@@ -4,7 +4,7 @@
 PCVRP
 ==========
 
-Parallel environment for the Prize-Collecting Capacitated Vehicle Routing Problem (PCVRP), see [Bal89]_.
+Parallel environment for the Prize-Collecting Capacitated Vehicle Routing Problem (PCVRP).
 
 .. toctree::
     :maxdepth: 1
