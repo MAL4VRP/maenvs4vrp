@@ -73,6 +73,9 @@ The simulation proceeds until all agents have completed their tasks and returned
         td = env.sample_action(td)  # This is where your policy interacts with the environment
         td = env.step(td)
 
+To run on a GPU, build the environment with ``device="cuda"``; ``reset`` keeps that device.
+For training with a masked policy, also pass ``check_actions=False`` (see :doc:`performance`).
+
 ------------------
 Continue Learning
 ------------------
