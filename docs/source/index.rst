@@ -23,6 +23,7 @@ If you want to have a grasp of the basics about the library, you can check our `
     content/install
     content/start
     content/test
+    content/performance
     content/references
 
 .. toctree::

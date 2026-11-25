@@ -47,7 +47,12 @@ Environment tests
 * ``reset_bench_test.py`` and ``seed_bench_test.py``: episodes and seeding on benchmark instances.
 * ``seed_test.py``: identical seeds give identical instances and different seeds give different ones.
 * ``tests/unit/test_episodes.py``: identical seeds give identical episodes, the dense and sparse rewards agree
-  over an episode, and the solution validators reject corrupted solutions.
+  over an episode, the solution validators reject corrupted solutions, ``visited_nodes`` matches the solution,
+  and episodes run on the environment device (CUDA cases are skipped without a GPU).
+* ``tests/unit/test_golden_rollouts.py``: random episodes of every environment, in several interaction modes,
+  must reproduce a stored reference (``tests/data/golden_rollouts.pt.xz``) of actions, rewards, penalties and
+  final state. Regenerate the reference with ``python tests/unit/test_golden_rollouts.py --update`` only for an
+  intended change of behaviour.
 * ``tests/unit/test_generators.py``: unknown ``sample_type`` values raise ``ValueError``, random generation
   works without network access, and every toy instance can be solved.
 * ``tests/unit/test_observations.py``: every feature listed in the ``POSSIBLE_*_FEATURES`` lists works and has

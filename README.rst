@@ -9,6 +9,20 @@ MAEnvs4VRP is a library comprising multi-agent environments for simulating class
     :alt: Google Colab Badge
     :target: https://colab.research.google.com/github/MAEnvs4VRP/maenvs4vrp/blob/master/maenvs4vrp/learning_notebooks/1.0.0_quickstart_cvrptw.ipynb
 
+What's NEW in v0.3.1
+=====================
+
+- **Faster step:** the environment step no longer waits for the GPU (boolean-mask indexing, ``nonzero`` and
+  per-step asserts were replaced by ``torch.where``/``scatter_``), so it runs 20–35% faster on GPU and a training
+  iteration of the attention model is 8–10% faster. These speed-ups leave episodes bitwise identical.
+- New ``check_actions`` constructor argument (default ``True``): set it to ``False`` when the actions come from a
+  masked policy to skip the per-step feasibility asserts. The training scripts do.
+- ``reset(device=None)`` keeps the environment device, so an environment built with ``device="cuda"`` stays on the
+  GPU; the multi-task environments now run on CUDA.
+- Bug fixes, stricter solution validators and a new consistency test suite. Some results can differ from v0.3
+  (PDPTW, SDVRPTW, DSVRPTW, HCVRP): see the `CHANGELOG <https://github.com/MAEnvs4VRP/maenvs4vrp/blob/master/CHANGELOG.md>`_
+  and the `performance study <https://github.com/MAEnvs4VRP/maenvs4vrp/blob/master/docs/performance.md>`_.
+
 What's NEW in v0.3!
 =====================
 
@@ -266,7 +280,17 @@ The built-in neuro solver baselines can be trained directly on any sequential en
     uv run python maenvs4vrp/neuro_solvers/attention_model/train_ppo.py \
         --vrp_env toptw --num_agents 5 --num_nodes 51 --selection stime
 
+When you write your own training loop, build the environment on the device of the policy and skip the per-step
+action checks, since a masked policy only picks feasible actions:
 
+.. code-block:: python
+
+    env = Environment(instance_generator_object=gen, obs_builder_object=obs,
+                      agent_selector_object=sel, reward_evaluator=rew,
+                      device="cuda", check_actions=False)
+
+Request the static node features (``nodes_static``) only at reset, not at every step.
+See `Training performance <https://maenvs4vrp.readthedocs.io/en/latest/content/performance.html>`_ for details.
 
 Unit Testing
 =================
@@ -294,6 +318,9 @@ To run the full unit test suite and verify compatibility across different enviro
 .. code-block:: bash
 
     uv run pytest --device cpu --batch 1 --num_agents 2 --num_nodes 11
+
+``tests/unit/test_golden_rollouts.py`` replays stored random episodes of every environment and checks that
+actions, rewards and final states are unchanged; run it after any change to an environment step.
 
 For additional details and examples, please refer to the documentation.
 
